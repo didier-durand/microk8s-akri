@@ -224,14 +224,15 @@ exec_step1()
     sudo chown -f -R $USER ~/.kube
   fi
   
+  echo -e "$STEP_COMPLETED $STEP"
+  
   if [[ -f /var/run/reboot-required ]]
   then
     echo 'WARNING: reboot required: Reboot in 2s...'
     sleep 2s
     sudo reboot
   fi
-  
-  echo -e "$STEP_COMPLETED $STEP"
+
 }
 
 exec_step2()
