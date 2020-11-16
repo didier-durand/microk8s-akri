@@ -101,14 +101,14 @@ then
   I=0
   STEP=1
   STEP_REPORT="$AKRI_INSTANCE-step-report-$STEP.log" && touch "$STEP_REPORT"
-  while [[ ! $(cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED") && $I -lt 2 ]]
+  while [[ ! $(cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED") && $I -lt 2 ]]
   do
     I=$((I+1))
     echo -e "\n### executing script step: $STEP  - iteration: $I"
     gcloud compute ssh "$AKRI_INSTANCE" --command="bash ./$(basename $0) $STEP" --zone="$GCP_ZONE" --project="$GCP_PROJECT" | tee -a "$STEP_REPORT"
     if [[ $? == '0' ]] 
     then
-      if [[ $(cat "$STEP_REPORT" | grep "$STEP_COMPLETED $STEP") ]]
+      if [[ $(cat "$STEP_REPORT" | grep "$STEP_COMPLETED $STEP") ]]
       then
         if [[ "$STEP" -lt "$TOTAL_STEPS" ]]
         then
@@ -123,7 +123,7 @@ then
       sleep 5s 
     done
   done
-  cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED"
+  cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED"
   rm "$AKRI_INSTANCE-step-report-*"
   
   if [[ "$AKRI_GCE_DELETE" == 'true' ]]
