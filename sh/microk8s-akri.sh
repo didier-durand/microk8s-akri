@@ -146,7 +146,10 @@ chmod go-r "$KUBE_CONFIG"
 
 exec_step1()
 {
+
   local STEP="$1"
+  
+  echo -e "\n### STEP 1: INSTALL PACKAGES & SETUP MICROK8S:"
   
   if [[ -z $(which crictl) ]]
   then
@@ -233,9 +236,10 @@ exec_step1()
 
 exec_step2()
 {
-
   local STEP="$1"
   
+  echo -e "\n### STEP 2: RUN TESTS WITH AKRI:"
+
   echo -e "\n### start ffmpeg streams (in background): "
   ffmpeg -filter_complex loop=loop=-1:size=700 -f lavfi -i testsrc -f v4l2 /dev/video1 > stdout-video1.log 2>&1 < /dev/null &
   ffmpeg -filter_complex loop=loop=-1:size=700 -f lavfi -i smptebars -f v4l2 /dev/video2 > stdout-video2.log 2>&1 < /dev/null &
