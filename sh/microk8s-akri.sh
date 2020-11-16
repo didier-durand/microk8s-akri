@@ -282,13 +282,14 @@ exec_step2()
     echo -e "\n### install akri chart: "
     helm repo list | grep 'akri-helm-charts' || helm --kubeconfig "$KUBE_CONFIG" repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/'
     export AKRI_HELM_CRICTL_CONFIGURATION='--set agent.host.crictl=/usr/local/bin/crictl --set agent.host.dockerShimSock=/var/snap/microk8s/common/run/containerd.sock'
+    
     # to get details --dry-run --debug
-    helm install 'akri' 'akri-helm-charts/akri-dev' \
+    microk8s helm install 'akri' 'akri-helm-charts/akri-dev' \
         "$AKRI_HELM_CRICTL_CONFIGURATION" \
         --set useLatestContainers=true \
         --set udevVideo.enabled=true \
         --set udev.name=akri-udev-video \
-        --set udevVideo.udevRules[0]='KERNEL==\"video[0-9]*\"' \
+        --set udevVideo.udevRules[0]='KERNEL=="video[0-9]*"' \
         --set udev.brokerPod.image.repository="ghcr.io/deislabs/akri/udev-video-broker:latest-dev"  \
         --kubeconfig "$KUBE_CONFIG"
     microk8s kubectl wait --for=condition=available --timeout=50s 'deployment.apps/akri-controller-deployment' -n default
