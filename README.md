@@ -1,1 +1,1 @@
-Akri tests: Work in Progress
+Tests with [Akri project](https://github.com/deislabs/akri) by Microsoft: Work in Progress
