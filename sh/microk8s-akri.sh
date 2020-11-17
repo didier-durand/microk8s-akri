@@ -163,13 +163,13 @@ exec_step1()
     echo -e "#### crictl path: $(which crictl)"
   fi
 
-  if [[ -z $(which helm) ]]
-  then
-    echo -e "\n### installing helm: "
-    sudo snap install helm --classic
-    sudo snap list | grep 'helm'
-    helm version | grep 'v3'
-  fi
+  #if [[ -z $(which helm) ]]
+  #then
+    #echo -e "\n### installing helm: "
+    #sudo snap install helm --classic
+    #sudo snap list | grep 'helm'
+    #helm version | grep 'v3'
+  #fi
   
   if [[ "$VIDEO_INSTALL" == 'true' ]]
   then
