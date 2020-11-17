@@ -282,9 +282,11 @@ exec_step2()
     echo -e "\n### install akri chart: "
     helm repo list | grep 'akri-helm-charts' || helm --kubeconfig "$KUBE_CONFIG" repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/'
     export AKRI_HELM_CRICTL_CONFIGURATION='--set agent.host.crictl=/usr/local/bin/crictl --set agent.host.dockerShimSock=/var/snap/microk8s/common/run/containerd.sock'
+    which 'critctl' | grep '/usr/local/bin/crictl'
     
     # to get details --dry-run --debug
-    microk8s helm3 install 'akri' 'akri-helm-charts/akri-dev' \
+    #microk8s helm3 install 'akri' 'akri-helm-charts/akri-dev' \
+    helm install 'akri' 'akri-helm-charts/akri-dev' \
         "$AKRI_HELM_CRICTL_CONFIGURATION" \
         --set useLatestContainers=true \
         --set udevVideo.enabled=true \
