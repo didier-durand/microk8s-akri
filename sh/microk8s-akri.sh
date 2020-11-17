@@ -273,7 +273,7 @@ exec_step2()
    
   echo -e "\n### restarting microk8s: "
   microk8s start
-  microk8s status --wait-ready --timeout 120
+  microk8s status
   
   echo -e "\n### enabling addons: "
   microk8s enable dns
