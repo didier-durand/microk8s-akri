@@ -266,15 +266,16 @@ exec_step2()
   echo -e "\n### microk8s kube-config:"
   cat "$KUBE_CONFIG"
  
-  echo -e "\n### allowing privileged containers: "
-  microk8s stop
+  #echo -e "\n### allowing privileged containers: "
+  #microk8s stop
   # sudo required to update : /var/snap/microk8s/current/args/kube-apiserver
-  sudo cat /var/snap/microk8s/current/args/kube-apiserver | grep -- '--allow-privileged=true'  || sudo echo '--allow-privileged=true' >> /var/snap/microk8s/current/args/kube-apiserver
+  #sudo cat /var/snap/microk8s/current/args/kube-apiserver | grep -- '--allow-privileged=true'  || sudo echo '--allow-privileged=true' >> /var/snap/microk8s/current/args/kube-apiserver
    
-  echo -e "\n### restarting microk8s: "
-  microk8s start
-  echo -e "\n### wait for cluster ready: "
-  microk8s status --wait-ready --timeout 120
+  #echo -e "\n### restarting microk8s: "
+  #microk8s start
+  #echo -e "\n### wait for cluster ready: "
+  #microk8s status --wait-ready --timeout 120
+  microk8s status | grep 'microk8s is running'
   
   echo -e "\n### enabling addons: "
   microk8s enable dns
