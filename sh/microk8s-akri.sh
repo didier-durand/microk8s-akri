@@ -247,6 +247,9 @@ exec_step2()
   echo -e "\n### reload v4l2loopback (if needed): "
   lsmod | grep 'v4l2loopback' || sudo modprobe v4l2loopback exclusive_caps=1 devices=2 video_nr=1,2
   
+  echo -e "\n### check microk8s authorization: "
+  groups | grep 'microk8s'
+  
   echo -e "\n### check video devices: "
   ls -l /dev/video1
   ls -l /dev/video2
