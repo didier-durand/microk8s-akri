@@ -99,7 +99,7 @@ then
   gcloud compute ssh $AKRI_INSTANCE --command="sudo chmod ugo+x ./$(basename $0)" --zone $GCP_ZONE --project=$GCP_PROJECT
   
   I=0
-  STEP=1
+  STEP=2
   STEP_REPORT="$AKRI_INSTANCE-step-report-$STEP.log" && touch "$STEP_REPORT"
   while [[ ! $(cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED") && $I -lt 2 ]]
   do
@@ -173,36 +173,37 @@ exec_step1()
   
   if [[ "$VIDEO_INSTALL" == 'true' ]]
   then
-    echo -e "\n### load kernel module v4l2loopback: "
-    #v0.12.5 is imperative (gstreamer will fail if lower) - 0.12.5 starts with Ubuntu 10.10
-    sudo apt update -y && sudo apt install -y dkms 
-    sudo apt install -y "linux-modules-extra-$(uname -r)"
-    curl http://deb.debian.org/debian/pool/main/v/v4l2loopback/v4l2loopback-dkms_0.12.5-1_all.deb -o v4l2loopback-dkms_0.12.5-1_all.deb
-    sudo dpkg -i v4l2loopback-dkms_0.12.5-1_all.deb
-    #to obtain v0.12.5 (or better)
-    #sudo apt install -y "linux-modules-extra-$(uname -r)"
-    #sudo add-apt-repository 'deb http://us.archive.ubuntu.com/ubuntu/ groovy universe multiverse'
-    #sudo add-apt-repository 'deb http://us.archive.ubuntu.com/ubuntu/ groovy-updates universe multiverse'
-    #sudo apt install -y v4l2loopback-dkms v4l-utils
-    #sudo apt install -y v4l2loopback-dkms
-    
-    sudo modprobe v4l2loopback exclusive_caps=1 devices=2 video_nr=1,2
-    #make it last through reboot
-    echo v4l2loopback | sudo tee -a /etc/modules
   
-    echo -e "\n### check kernel modules: "
-    lsmod | grep 'videodev'
-    lsmod | grep 'v4l2loopback'
-    modinfo 'v4l2loopback'| grep 'vermagic'
+    if [[ ! $(lsmod | grep 'v4l2loopback') == *'v4l2loopback'* ]]
+    then 
+      echo -e "\n### load kernel module v4l2loopback: "
+      #v0.12.5 is imperative (gstreamer will fail if lower) - 0.12.5 starts with Ubuntu 10.10
+      sudo apt update -y && sudo apt install -y dkms v4l-utils
+      sudo apt install -y "linux-modules-extra-$(uname -r)"
+      curl http://deb.debian.org/debian/pool/main/v/v4l2loopback/v4l2loopback-dkms_0.12.5-1_all.deb -o v4l2loopback-dkms_0.12.5-1_all.deb
+      sudo dpkg -i v4l2loopback-dkms_0.12.5-1_all.deb
+      #to obtain v0.12.5 (or better)
+      #sudo apt install -y "linux-modules-extra-$(uname -r)"
+      #sudo add-apt-repository 'deb http://us.archive.ubuntu.com/ubuntu/ groovy universe multiverse'
+      #sudo add-apt-repository 'deb http://us.archive.ubuntu.com/ubuntu/ groovy-updates universe multiverse'
+      #sudo apt install -y v4l2loopback-dkms v4l-utils
+      #sudo apt install -y v4l2loopback-dkms
+    
+      sudo modprobe v4l2loopback exclusive_caps=1 devices=2 video_nr=1,2
+   
+      echo -e "\n### check kernel modules: "
+      lsmod | grep 'videodev'
+      lsmod | grep 'v4l2loopback'
+      modinfo 'v4l2loopback'| grep 'vermagic'
+    fi
   
     echo -e "\n### check devices: "
     ls -l /dev/video1
     ls -l /dev/video2
   
-    echo -e "\n### v4l42-ctl --all: "
+    #echo -e "\n### v4l42-ctl --all: "
     #v4l2-ctl --all -d /dev/video1
     #v4l2-ctl --all -d /dev/video2
-    #v4l2-ctl --list-formats -d /dev/video2
     
     if [[ -z $(which ffmpeg) ]]
     then
@@ -228,7 +229,7 @@ exec_step1()
   
   if [[ -f /var/run/reboot-required ]]
   then
-    echo 'WARNING: reboot required: Reboot in 2s...'
+    echo 'WARNING: reboot required. Reboot in 2s...'
     sleep 2s
     sudo reboot
   fi
@@ -240,6 +241,13 @@ exec_step2()
   local STEP="$1"
   
   echo -e "\n### STEP 2: RUN TESTS WITH AKRI:"
+  
+  echo -e "\n### reload v4l2loopback (if needed): "
+  lsmod | grep 'v4l2loopback' || sudo modprobe v4l2loopback exclusive_caps=1 devices=2 video_nr=1,2
+  
+  echo -e "\n### check video devices: "
+  ls -l /dev/video1
+  ls -l /dev/video2
 
   echo -e "\n### start ffmpeg streams (in background): "
   ffmpeg -filter_complex loop=loop=-1:size=700 -f lavfi -i testsrc -f v4l2 /dev/video1 > stdout-video1.log 2>&1 < /dev/null &
@@ -280,29 +288,28 @@ exec_step2()
   then 
   
     echo -e "\n### install akri chart: "
-    helm repo list | grep 'akri-helm-charts' || helm --kubeconfig "$KUBE_CONFIG" repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/'
+    microk8s helm3 repo list | grep 'akri-helm-charts' || microk8s helm3 repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/'
+    echo -e "critctl path: $(which 'crictl' | grep '/usr/local/bin/crictl')"
     export AKRI_HELM_CRICTL_CONFIGURATION='--set agent.host.crictl=/usr/local/bin/crictl --set agent.host.dockerShimSock=/var/snap/microk8s/common/run/containerd.sock'
-    which 'critctl' | grep '/usr/local/bin/crictl'
-    
-    # to get details --dry-run --debug
-    #microk8s helm3 install 'akri' 'akri-helm-charts/akri-dev' \
-    helm install 'akri' 'akri-helm-charts/akri-dev' \
+                                                            
+    microk8s helm3 install 'akri' 'akri-helm-charts/akri-dev' \
         "$AKRI_HELM_CRICTL_CONFIGURATION" \
         --set useLatestContainers=true \
         --set udevVideo.enabled=true \
         --set udev.name=akri-udev-video \
         --set udevVideo.udevRules[0]='KERNEL=="video[0-9]*"' \
-        --set udev.brokerPod.image.repository="ghcr.io/deislabs/akri/udev-video-broker:latest-dev"  \
-        --kubeconfig "$KUBE_CONFIG"
-    microk8s kubectl wait --for=condition=available --timeout=50s 'deployment.apps/akri-controller-deployment' -n default
+        --set udev.brokerPod.image.repository="ghcr.io/deislabs/akri/udev-video-broker:latest-dev"
     
-    
-    #https://github.com/kubernetes/kubernetes/issues/83094
-    #You could try kubectl wait --for=jsonpath=.status.phase=wish-i-was-a-condition
-    #microk8s kubectl wait --for=condition=available --timeout=50s daemonset.apps/akri-agent-daemonset -n default
+    microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/akri-controller-deployment' -n default
+    microk8s kubectl wait pod --for=condition=ready --timeout=120s --selector=akri.sh/configuration=akri-udev-video -n default
+
     echo -e "\n### install video streaming app: "
     microk8s kubectl apply -f "https://raw.githubusercontent.com/deislabs/akri/main/deployment/samples/akri-video-streaming-app.yaml"
     microk8s kubectl wait --for=condition=available --timeout=50s 'deployment.apps/akri-video-streaming-app' -n default
+    
+    NODEPORT=$(microk8s.kubectl get service/akri-video-streaming-app --output=jsonpath='{.spec.ports[?(@.name==\"http\")].nodePort}')
+    echo -e "Node port: $NODEPORT"
+    
   fi
   
   echo -e "$STEP_COMPLETED $STEP"
