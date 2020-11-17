@@ -220,7 +220,7 @@ exec_step1()
     echo -e "\n### install microk8s: "
     sudo snap install 'microk8s' --classic --channel="$MK8S_VERSION"
     sudo snap list | grep 'microk8s'
-    sudo microk8s status --wait-ready
+    sudo microk8s status --wait-ready --timeout 120
     sudo usermod -a -G 'microk8s' $USER
     sudo chown -f -R $USER ~/.kube
   fi
@@ -273,8 +273,7 @@ exec_step2()
    
   echo -e "\n### restarting microk8s: "
   microk8s start
-  sleep 10s
-  microk8s status --wait-ready 
+  microk8s status --wait-ready --timeout 120
   
   echo -e "\n### enabling addons: "
   microk8s enable dns
