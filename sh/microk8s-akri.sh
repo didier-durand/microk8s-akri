@@ -221,8 +221,10 @@ exec_step1()
     sudo snap install 'microk8s' --classic --channel="$MK8S_VERSION"
     sudo snap list | grep 'microk8s'
     sudo microk8s status --wait-ready --timeout 120
+    echo -e "\n### authorizing user to microk8s: "
     sudo usermod -a -G 'microk8s' $USER
     sudo chown -f -R $USER ~/.kube
+    echo -e "\n### groups for user: $(groups)"
   fi
   
   echo -e "$STEP_COMPLETED $STEP"
