@@ -99,7 +99,7 @@ then
   gcloud compute ssh $AKRI_INSTANCE --command="sudo chmod ugo+x ./$(basename $0)" --zone $GCP_ZONE --project=$GCP_PROJECT
   
   I=0
-  STEP=2
+  STEP=1
   STEP_REPORT="$AKRI_INSTANCE-step-report-$STEP.log" && touch "$STEP_REPORT"
   while [[ ! $(cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED") && $I -lt 2 ]]
   do
