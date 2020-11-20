@@ -117,11 +117,13 @@ then
         fi
       fi
     fi
+    set -x
     while [[ ! $(gcloud compute ssh "$AKRI_INSTANCE" --command='uname -a' --zone="$GCP_ZONE" --project="$GCP_PROJECT") == *'Linux'* ]]
     do
       echo -e "instance not ready for ssh..."
       sleep 5s 
     done
+    set +x
   done
   cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED"
   rm "$AKRI_INSTANCE-step-report-*"
@@ -139,7 +141,9 @@ fi
 
 echo -e "\n### running on GCE\n"
 
-[[ -d '.kube' ]] || mkdir '.kube'
+cd
+[[ -d '.kube' ]] || mkdir '.kube' 
+sudo chown -f -R $USER '.kube' 
 KUBE_CONFIG="$HOME/.kube/config"
 [[ -f "$KUBE_CONFIG" ]] || touch "$KUBE_CONFIG"
 chmod go-r "$KUBE_CONFIG"
@@ -176,7 +180,7 @@ exec_step1()
   
     if [[ ! $(lsmod | grep 'v4l2loopback') == *'v4l2loopback'* ]]
     then 
-      echo -e "\n### load kernel module v4l2loopback: "
+      echo -e "\n### build kernel module v4l2loopback: "
       #v0.12.5 is imperative (gstreamer will fail if lower) - 0.12.5 starts with Ubuntu 10.10
       sudo apt update -y && sudo apt install -y dkms v4l-utils
       sudo apt install -y "linux-modules-extra-$(uname -r)"
@@ -189,9 +193,11 @@ exec_step1()
       #sudo apt install -y v4l2loopback-dkms v4l-utils
       #sudo apt install -y v4l2loopback-dkms
     
+      echo -e "\n### load kernel module v4l2loopback: "
       sudo modprobe v4l2loopback exclusive_caps=1 devices=2 video_nr=1,2
+      cat /etc/modules
    
-      echo -e "\n### check kernel modules: "
+      echo -e "\n### check required kernel modules: "
       lsmod | grep 'videodev'
       lsmod | grep 'v4l2loopback'
       modinfo 'v4l2loopback'| grep 'vermagic'
@@ -218,13 +224,12 @@ exec_step1()
   if [[ -z $(which microk8s) ]]
   then
     echo -e "\n### install microk8s: "
-    sudo snap install 'microk8s' --classic --channel="$MK8S_VERSION"
+    #sudo snap install 'microk8s' --classic --channel="$MK8S_VERSION"
+    sudo snap install 'microk8s' --classic --edge
     sudo snap list | grep 'microk8s'
     sudo microk8s status --wait-ready --timeout 120
-    echo -e "\n### authorizing user to microk8s: "
     sudo usermod -a -G 'microk8s' $USER
-    sudo chown -f -R $USER ~/.kube
-    echo -e "\n### groups for user: $(groups)"
+    echo -e "groups for user: $(groups)"
   fi
   
   echo -e "$STEP_COMPLETED $STEP"
@@ -244,8 +249,8 @@ exec_step2()
   
   echo -e "\n### STEP 2: RUN TESTS WITH AKRI:"
   
-  echo -e "\n### reload v4l2loopback (if needed): "
-  lsmod | grep 'v4l2loopback' || sudo modprobe v4l2loopback exclusive_caps=1 devices=2 video_nr=1,2
+  echo -e "\n### reload v4l2loopback and create devices: "
+  sudo modprobe v4l2loopback exclusive_caps=1 devices=2 video_nr=1,2
   
   echo -e "\n### check microk8s authorization: "
   groups | grep 'microk8s'
@@ -271,15 +276,15 @@ exec_step2()
   echo -e "\n### microk8s kube-config:"
   cat "$KUBE_CONFIG"
  
-  #echo -e "\n### allowing privileged containers: "
-  #microk8s stop
-  # sudo required to update : /var/snap/microk8s/current/args/kube-apiserver
-  #sudo cat /var/snap/microk8s/current/args/kube-apiserver | grep -- '--allow-privileged=true'  || sudo echo '--allow-privileged=true' >> /var/snap/microk8s/current/args/kube-apiserver
+  echo -e "\n### allowing privileged containers: "
+  microk8s stop
+  #sudo required to update : /var/snap/microk8s/current/args/kube-apiserver
+  sudo cat /var/snap/microk8s/current/args/kube-apiserver | grep -- '--allow-privileged=true'  || sudo echo '--allow-privileged=true' >> /var/snap/microk8s/current/args/kube-apiserver
    
-  #echo -e "\n### restarting microk8s: "
-  #microk8s start
-  #echo -e "\n### wait for cluster ready: "
-  #microk8s status --wait-ready --timeout 120
+  echo -e "\n### restarting microk8s: "
+  microk8s start
+  echo -e "\n### wait for cluster ready: "
+  microk8s status --wait-ready --timeout 120
   microk8s status | grep 'microk8s is running'
   
   echo -e "\n### enabling addons: "
