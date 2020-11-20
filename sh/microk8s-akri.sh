@@ -301,10 +301,12 @@ exec_step2()
     echo -e "\n### install akri chart: "
     microk8s helm3 repo list | grep 'akri-helm-charts' || microk8s helm3 repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/'
     echo -e "critctl path: $(which 'crictl' | grep '/usr/local/bin/crictl')"
-    export AKRI_HELM_CRICTL_CONFIGURATION='--set agent.host.crictl=/usr/local/bin/crictl --set agent.host.dockerShimSock=/var/snap/microk8s/common/run/containerd.sock'
+    which 'crictl' | grep '/usr/local/bin/crictl'
+    #export AKRI_HELM_CRICTL_CONFIGURATION='--set agent.host.crictl=/usr/local/bin/crictl --set agent.host.dockerShimSock=/var/snap/microk8s/common/run/containerd.sock'
                                                             
     microk8s helm3 install 'akri' 'akri-helm-charts/akri-dev' \
-        "$AKRI_HELM_CRICTL_CONFIGURATION" \
+        --set agent.host.crictl='/usr/local/bin/crictl'
+        --set agent.host.dockerShimSock='/var/snap/microk8s/common/run/containerd.sock'
         --set useLatestContainers=true \
         --set udevVideo.enabled=true \
         --set udev.name=akri-udev-video \
@@ -318,10 +320,13 @@ exec_step2()
     microk8s kubectl apply -f "https://raw.githubusercontent.com/deislabs/akri/main/deployment/samples/akri-video-streaming-app.yaml"
     microk8s kubectl wait --for=condition=available --timeout=50s 'deployment.apps/akri-video-streaming-app' -n default
     
-    NODEPORT=$(microk8s.kubectl get service/akri-video-streaming-app --output=jsonpath='{.spec.ports[?(@.name==\"http\")].nodePort}')
+    NODEPORT=$(microk8s kubectl get service/akri-video-streaming-app --output=jsonpath='{.spec.ports[?(@.name==\"http\")].nodePort}')
     echo -e "Node port: $NODEPORT"
-    
+    HOSTPORT=8888
+   
   fi
+  
+  echo -e "gcloud command: gcloud compute ssh $AKRI_INSTANCE --zone=$GCP_ZONE --project=$GCP_PROJECT --ssh-flag='-L $HOSTPORT:localhost:$NODEPORT'"
   
   echo -e "$STEP_COMPLETED $STEP"
   echo -e "$SCRIPT_COMPLETED"
