@@ -117,13 +117,11 @@ then
         fi
       fi
     fi
-    set -x
     while [[ ! $(gcloud compute ssh "$AKRI_INSTANCE" --command='uname -a' --zone="$GCP_ZONE" --project="$GCP_PROJECT") == *'Linux'* ]]
     do
       echo -e "instance not ready for ssh..."
       sleep 5s 
     done
-    set +x
   done
   cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED"
   rm "$AKRI_INSTANCE-step-report-*"
@@ -225,7 +223,7 @@ exec_step1()
   then
     echo -e "\n### install microk8s: "
     #sudo snap install 'microk8s' --classic --channel="$MK8S_VERSION"
-    sudo snap install 'microk8s' --classic --edge
+    sudo snap install 'microk8s' --classic --channel=latest/edge
     sudo snap list | grep 'microk8s'
     sudo microk8s status --wait-ready --timeout 120
     sudo usermod -a -G 'microk8s' $USER
@@ -291,6 +289,7 @@ exec_step2()
   microk8s enable dns
   microk8s enable helm3
   microk8s enable rbac
+  microk8s status --wait-ready --timeout 120
   
   echo -e "\n### checking crictl: "
   which crictl | grep 'crictl'
@@ -305,8 +304,8 @@ exec_step2()
     #export AKRI_HELM_CRICTL_CONFIGURATION='--set agent.host.crictl=/usr/local/bin/crictl --set agent.host.dockerShimSock=/var/snap/microk8s/common/run/containerd.sock'
                                                             
     microk8s helm3 install 'akri' 'akri-helm-charts/akri-dev' \
-        --set agent.host.crictl='/usr/local/bin/crictl'
-        --set agent.host.dockerShimSock='/var/snap/microk8s/common/run/containerd.sock'
+        --set agent.host.crictl='/usr/local/bin/crictl'  \
+        --set agent.host.dockerShimSock='/var/snap/microk8s/common/run/containerd.sock' \
         --set useLatestContainers=true \
         --set udevVideo.enabled=true \
         --set udev.name=akri-udev-video \
