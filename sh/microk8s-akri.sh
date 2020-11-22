@@ -1,9 +1,5 @@
 #!/bin/bash
 
-#source: https://cloudblogs.microsoft.com/opensource/2020/10/20/announcing-akri-open-source-project-building-connected-edge-kubernetes/
-#source: https://github.com/deislabs/akri/blob/main/docs/end-to-end-demo.md
-#https://medium.com/akri/say-hello-to-akri-5b183cd397a8
-
 set -e
 trap 'catch $? $LINENO' EXIT
 catch() {
@@ -41,7 +37,6 @@ if [[ -z ${AKRI_IMAGE_FAMILY+x} ]]                           ; then AKRI_IMAGE_F
 if [[ -z ${AKRI_IMAGE_PROJECT+x} ]]                          ; then AKRI_IMAGE_PROJECT='ubuntu-os-cloud'       ; fi ; echo "akri image project: $AKRI_IMAGE_PROJECT"
 if [[ -z ${AKRI_INSTANCE+x} ]]                               ; then AKRI_INSTANCE='microk8s-akri'              ; fi ; echo "akri host instance: $AKRI_INSTANCE"
 
-if [[ -z ${MK8S_VERSION+x} ]]                                ; then MK8S_VERSION='1.19'                        ; fi ; echo "mk8s version: $MK8S_VERSION"
 echo -e " "
 
 create_gce_instance() 
@@ -82,7 +77,7 @@ delete_gce_instance()
       --zone "$GCP_ZONE" \
       --project="$GCP_PROJECT" \
       --quiet \
-      $GCE_INSTANCE   
+      "$GCE_INSTANCE" 
 
 }
 
@@ -94,9 +89,9 @@ then
   
   create_gce_instance "$AKRI_INSTANCE" "$AKRI_IMAGE_FAMILY" "$AKRI_IMAGE_PROJECT" 
       
-  gcloud compute ssh $AKRI_INSTANCE --command='sudo rm -rf /var/lib/apt/lists/* && sudo apt update -y && (sudo apt upgrade -y || sudo apt upgrade -y) && sudo apt autoremove -y' --zone $GCP_ZONE --project=$GCP_PROJECT
-  gcloud compute scp $0  $AKRI_INSTANCE:$(basename $0) --zone $GCP_ZONE --project=$GCP_PROJECT
-  gcloud compute ssh $AKRI_INSTANCE --command="sudo chmod ugo+x ./$(basename $0)" --zone $GCP_ZONE --project=$GCP_PROJECT
+  gcloud compute ssh "$AKRI_INSTANCE" --command='sudo rm -rf /var/lib/apt/lists/* && sudo apt update -y && (sudo apt upgrade -y || sudo apt upgrade -y) && sudo apt autoremove -y' --zone "$GCP_ZONE" --project="$GCP_PROJECT"
+  gcloud compute scp "$0"  "$AKRI_INSTANCE:$(basename $0)" --zone "$GCP_ZONE" --project="$GCP_PROJECT"
+  gcloud compute ssh "$AKRI_INSTANCE" --command="sudo chmod ugo+x ./$(basename $0)" --zone "$GCP_ZONE" --project="$GCP_PROJECT"
   
   I=0
   STEP=1
@@ -124,7 +119,7 @@ then
     done
   done
   cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED"
-  rm "$AKRI_INSTANCE-step-report-*"
+  rm -f "$AKRI_INSTANCE-step-report-*" || true
   
   if [[ "$AKRI_GCE_DELETE" == 'true' ]]
   then
@@ -141,7 +136,7 @@ echo -e "\n### running on GCE\n"
 
 cd
 [[ -d '.kube' ]] || mkdir '.kube' 
-sudo chown -f -R $USER '.kube' 
+sudo chown -f -R "$USER" '.kube' 
 KUBE_CONFIG="$HOME/.kube/config"
 [[ -f "$KUBE_CONFIG" ]] || touch "$KUBE_CONFIG"
 chmod go-r "$KUBE_CONFIG"
@@ -165,56 +160,47 @@ exec_step1()
     echo -e "#### crictl path: $(which crictl)"
   fi
 
-  #if [[ -z $(which helm) ]]
-  #then
-    #echo -e "\n### installing helm: "
-    #sudo snap install helm --classic
-    #sudo snap list | grep 'helm'
-    #helm version | grep 'v3'
-  #fi
-  
   if [[ "$VIDEO_INSTALL" == 'true' ]]
   then
   
-    if [[ ! $(lsmod | grep 'v4l2loopback') == *'v4l2loopback'* ]]
+    if [[ ! -f v4l2loopback-dkms_0.12.5-1_all.deb ]]
     then 
       echo -e "\n### build kernel module v4l2loopback: "
-      #v0.12.5 is imperative (gstreamer will fail if lower) - 0.12.5 starts with Ubuntu 10.10
-      sudo apt update -y && sudo apt install -y dkms v4l-utils
+      #v0.12.5 is imperative (gstreamer will fail if lower) - 0.12.5 starts with Ubuntu 20.10 or newer
+      sudo apt update -y && sudo apt install -y dkms
       sudo apt install -y "linux-modules-extra-$(uname -r)"
       curl http://deb.debian.org/debian/pool/main/v/v4l2loopback/v4l2loopback-dkms_0.12.5-1_all.deb -o v4l2loopback-dkms_0.12.5-1_all.deb
       sudo dpkg -i v4l2loopback-dkms_0.12.5-1_all.deb
-      #to obtain v0.12.5 (or better)
-      #sudo apt install -y "linux-modules-extra-$(uname -r)"
-      #sudo add-apt-repository 'deb http://us.archive.ubuntu.com/ubuntu/ groovy universe multiverse'
-      #sudo add-apt-repository 'deb http://us.archive.ubuntu.com/ubuntu/ groovy-updates universe multiverse'
-      #sudo apt install -y v4l2loopback-dkms v4l-utils
-      #sudo apt install -y v4l2loopback-dkms
-    
-      echo -e "\n### load kernel module v4l2loopback: "
-      sudo modprobe v4l2loopback exclusive_caps=1 devices=2 video_nr=1,2
-      cat /etc/modules
-   
-      echo -e "\n### check required kernel modules: "
-      lsmod | grep 'videodev'
-      lsmod | grep 'v4l2loopback'
-      modinfo 'v4l2loopback'| grep 'vermagic'
+      
     fi
+    
+    echo -e "\n### load kernel module v4l2loopback: "
+    sudo modprobe v4l2loopback exclusive_caps=1 devices=2 video_nr=1,2
+   
+    echo -e "\n### check required kernel modules: "
+    lsmod | grep 'videodev'
+    lsmod | grep 'v4l2loopback'
+    modinfo 'v4l2loopback'| grep 'vermagic'
   
     echo -e "\n### check devices: "
     ls -l /dev/video1
     ls -l /dev/video2
-  
-    #echo -e "\n### v4l42-ctl --all: "
-    #v4l2-ctl --all -d /dev/video1
-    #v4l2-ctl --all -d /dev/video2
     
     if [[ -z $(which ffmpeg) ]]
     then
-      echo -e "\n### install ffmpeg: "
+      echo -e "\n### install video streamer: "
       sudo apt install -y ffmpeg
       echo -e "ffmpeg path: $(which ffmpeg)"
       ffmpeg -version
+    fi
+    
+    if [[ -z $(which gst-launch-1.0) ]]
+    then
+      sudo apt-get install -y \
+           libgstreamer1.0-0 gstreamer1.0-tools gstreamer1.0-plugins-base \
+           gstreamer1.0-plugins-good gstreamer1.0-libav
+      echo -e "gst-launch path: $(which gst-launch-1.0)"
+      gst-launch-1.0 --version
     fi
     
   fi
@@ -226,7 +212,7 @@ exec_step1()
     sudo snap install 'microk8s' --classic --channel=latest/edge
     sudo snap list | grep 'microk8s'
     sudo microk8s status --wait-ready --timeout 120
-    sudo usermod -a -G 'microk8s' $USER
+    sudo usermod -a -G 'microk8s' "$USER"
     echo -e "groups for user: $(groups)"
   fi
   
@@ -257,15 +243,22 @@ exec_step2()
   ls -l /dev/video1
   ls -l /dev/video2
 
-  echo -e "\n### start ffmpeg streams (in background): "
-  ffmpeg -filter_complex loop=loop=-1:size=700 -f lavfi -i testsrc -f v4l2 /dev/video1 > stdout-video1.log 2>&1 < /dev/null &
-  ffmpeg -filter_complex loop=loop=-1:size=700 -f lavfi -i smptebars -f v4l2 /dev/video2 > stdout-video2.log 2>&1 < /dev/null &
+  if [[ -z $(sudo ps -ea | grep 'gst-launch') ]]
+  then
+  	echo -e "\n### start video streams (in background): "
+  	sudo gst-launch-1.0 -v videotestsrc pattern=ball ! "video/x-raw,width=640,height=480,framerate=10/1" ! avenc_mjpeg ! v4l2sink device=/dev/video1 &
+    sudo gst-launch-1.0 -v videotestsrc pattern=smpte horizontal-speed=1 ! "video/x-raw,width=640,height=480,framerate=10/1" ! avenc_mjpeg ! v4l2sink device=/dev/video2 &
+    sleep 15s
+  fi
+  
+  #ffmpeg -filter_complex loop=loop=-1:size=700 -f lavfi -i testsrc -f v4l2 /dev/video1 > stdout-video1.log 2>&1 < /dev/null &
+  #ffmpeg -filter_complex loop=loop=-1:size=700 -f lavfi -i smptebars -f v4l2 /dev/video2 > stdout-video2.log 2>&1 < /dev/null &
   #while [[ ! $(ffmpeg -hide_banner -sources v4l2 | grep '/dev/video2') == *'/dev/video2'* ]]
   #do
     #echo -e "video streams not ready: sleeping 5s..."
     #sleep 5s 
   #done
-  ffmpeg -hide_banner -sources v4l2 | grep 'Auto-detected'
+  #ffmpeg -hide_banner -sources v4l2 | grep 'Auto-detected'
   #ffmpeg -hide_banner -sources v4l2 | grep '/dev/video1' || true
   #ffmpeg -hide_banner -sources v4l2 | grep '/dev/video2' || true
   
@@ -273,67 +266,96 @@ exec_step2()
   microk8s config > "$KUBE_CONFIG"
   echo -e "\n### microk8s kube-config:"
   cat "$KUBE_CONFIG"
- 
-  echo -e "\n### allowing privileged containers: "
-  microk8s stop
-  #sudo required to update : /var/snap/microk8s/current/args/kube-apiserver
-  sudo cat /var/snap/microk8s/current/args/kube-apiserver | grep -- '--allow-privileged=true'  || sudo echo '--allow-privileged=true' >> /var/snap/microk8s/current/args/kube-apiserver
+  
+  if [[ -z $(sudo cat /var/snap/microk8s/current/args/kube-apiserver | grep -- '--allow-privileged=true') ]]
+  then
+     echo -e "\n### allowing privileged containers (required): "
+     microk8s stop
+     sudo echo '--allow-privileged=true' | sudo tee -a /var/snap/microk8s/current/args/kube-apiserver
+     cat /var/snap/microk8s/current/args/kube-apiserver
+     cat /var/snap/microk8s/current/args/kube-apiserver | grep -- '--allow-privileged=true'
    
-  echo -e "\n### restarting microk8s: "
-  microk8s start
-  echo -e "\n### wait for cluster ready: "
-  microk8s status --wait-ready --timeout 120
-  microk8s status | grep 'microk8s is running'
+     echo -e "\n### restarting microk8s: "
+     microk8s start
+     echo -e "\n### wait for cluster ready: "
+     microk8s status --wait-ready --timeout 120
+     microk8s status | grep 'microk8s is running'
+  fi
   
   echo -e "\n### enabling addons: "
   microk8s enable dns
   microk8s enable helm3
   microk8s enable rbac
+  microk8s enable dashboard
+  #to add dashboard to kubectl cluster-info
+  microk8s kubectl label service/kubernetes-dashboard kubernetes.io/cluster-service=true --namespace kube-system || true
   microk8s status --wait-ready --timeout 120
   
-  echo -e "\n### checking crictl: "
-  which crictl | grep 'crictl'
+  DEFAULT_MK8S_TOKEN=$(microk8s kubectl -n kube-system get secret --output=jsonpath='{.data.token}' "$(microk8s kubectl -n kube-system get secret | grep 'default-token' | cut -d " " -f1)")
+  echo -e "default microk8s token:\n$DEFAULT_MK8S_TOKEN"
+  K8S_DASHBOARD_PORT=$(microk8s kubectl get -n 'kube-system' 'service/kubernetes-dashboard' --output=jsonpath='{.spec.ports[0].port}')
+  LOCAL_K8S_DASHBOARD_PORT=3443
+  echo -e "Kubernetes dashboard ports - microk8s:  $K8S_DASHBOARD_PORT - local: LOCAL_K8S_DASHBOARD_PORT "
+  microk8s kubectl port-forward -n 'kube-system' 'service/kubernetes-dashboard' "$LOCAL_K8S_DASHBOARD_PORT:$K8S_DASHBOARD_PORT" &
   
   if [[ "$AKRI_INSTALL" == 'true' ]]
   then 
   
+    echo -e "\n### checking crictl: "
+    which crictl | grep '/usr/local/bin/crictl'
+    echo -e "check microk8s containerd socket:"
+    ls -l /var/snap/microk8s/common/run/containerd.sock
+    ls -l /var/snap/microk8s/common/run/containerd.sock  | awk '{print $1}' | grep 'srw'
+  
     echo -e "\n### install akri chart: "
     microk8s helm3 repo list | grep 'akri-helm-charts' || microk8s helm3 repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/'
-    echo -e "critctl path: $(which 'crictl' | grep '/usr/local/bin/crictl')"
-    which 'crictl' | grep '/usr/local/bin/crictl'
-    #export AKRI_HELM_CRICTL_CONFIGURATION='--set agent.host.crictl=/usr/local/bin/crictl --set agent.host.dockerShimSock=/var/snap/microk8s/common/run/containerd.sock'
-                                                            
-    microk8s helm3 install 'akri' 'akri-helm-charts/akri-dev' \
-        --set agent.host.crictl='/usr/local/bin/crictl'  \
-        --set agent.host.dockerShimSock='/var/snap/microk8s/common/run/containerd.sock' \
-        --set useLatestContainers=true \
-        --set udevVideo.enabled=true \
-        --set udev.name=akri-udev-video \
-        --set udevVideo.udevRules[0]='KERNEL=="video[0-9]*"' \
-        --set udev.brokerPod.image.repository="ghcr.io/deislabs/akri/udev-video-broker:latest-dev"
     
-    microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/akri-controller-deployment' -n default
-    microk8s kubectl wait pod --for=condition=ready --timeout=120s --selector=akri.sh/configuration=akri-udev-video -n default
-
+    AKRI_HELM_CRICTL_CONFIGURATION="--set agent.host.crictl=/usr/local/bin/crictl --set agent.host.dockerShimSock=/var/snap/microk8s/common/run/containerd.sock"
+                                                      
+    microk8s helm3 install 'akri'  \
+        'akri-helm-charts/akri-dev' \
+        $AKRI_HELM_CRICTL_CONFIGURATION \
+        --set useLatestContainers=true \
+        --set udev.enabled=true \
+        --set udev.name=akri-udev-video \
+        --set udev.udevRules[0]='KERNEL=="video[0-9]*"' \
+        --set udev.brokerPod.image.repository='ghcr.io/deislabs/akri/udev-video-broker:latest-dev'
+    
+    echo -e "\n### waiting for installed chart to get ready: "
+    microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/akri-controller-deployment' -n default || true
+    
+    microk8s kubectl get -o wide akric
+    
     echo -e "\n### install video streaming app: "
     microk8s kubectl apply -f "https://raw.githubusercontent.com/deislabs/akri/main/deployment/samples/akri-video-streaming-app.yaml"
     microk8s kubectl wait --for=condition=available --timeout=50s 'deployment.apps/akri-video-streaming-app' -n default
     
-    NODEPORT=$(microk8s kubectl get service/akri-video-streaming-app --output=jsonpath='{.spec.ports[?(@.name==\"http\")].nodePort}')
-    echo -e "Node port: $NODEPORT"
-    HOSTPORT=8888
+    microk8s kubectl get -o wide pods --all-namespaces
+    microk8s kubectl get -o wide daemonsets --all-namespaces
+    microk8s kubectl get -o wide services --all-namespaces
    
+    
+    AKRI_DASHBOARD_PORT=$(microk8s kubectl get service/akri-video-streaming-app --output=jsonpath='{.spec.ports[0].port}')
+    echo -e "Akri dashboard port: $AKRI_DASHBOARD_PORT"
+    LOCAL_AKRI_DASHBOARD_PORT=12321
+    echo -e "Kubernetes dashboard ports - microk8s:  $AKRI_DASHBOARD_PORT - local: LOCAL_AKRI_DASHBOARD_PORT "
+    microk8s kubectl port-forward -n 'default' 'service/akri-video-streaming-app' "$LOCAL_AKRI_DASHBOARD_PORT:$AKRI_DASHBOARD_PORT" &
+    
   fi
-  
-  echo -e "gcloud command: gcloud compute ssh $AKRI_INSTANCE --zone=$GCP_ZONE --project=$GCP_PROJECT --ssh-flag='-L $HOSTPORT:localhost:$NODEPORT'"
   
   echo -e "$STEP_COMPLETED $STEP"
   echo -e "$SCRIPT_COMPLETED"
+  
+  echo -e "gcloud command for access to K8s & Akri dashboards gcloud compute ssh $AKRI_INSTANCE --zone=$GCP_ZONE"  ' --project=$GCP_PROJECT ' "--ssh-flag='-L $LOCAL_K8S_DASHBOARD_PORT:localhost:$LOCAL_K8S_DASHBOARD_PORT -L $LOCAL_AKRI_DASHBOARD_PORT:localhost:$LOCAL_AKRI_DASHBOARD_PORT'"
+  echo -e "use authentication token: $(microk8s config | grep token | awk '{print $2}')"
+  echo -e "k8s dashboard: https://localhost:$LOCAL_K8S_DASHBOARD_PORT - akri dashboard:  https://localhost:$LOCAL_AKRI_DASHBOARD_PORT"
+  echo -e "akri dashboard:  https://localhost:$LOCAL_AKRI_DASHBOARD_PORT"
+  
 }
 
 exec_main()
 {
-  STEP=$1
+  STEP="$1"
   echo -e "### script step: $STEP"
   
   case $STEP in
@@ -351,4 +373,4 @@ exec_main()
   
 }
 
-exec_main $1
+exec_main "$1"
