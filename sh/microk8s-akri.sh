@@ -10,12 +10,13 @@ catch() {
 }
 
 REPORT='report.md'
+touch "$REPORT"
 
 OS=$(uname -a)
-echo "$OS"  | tee "$REPORT"
+echo "$OS"
 if [[ "$OS" == 'Linux'* ]]
 then
-   lsb_release -a | tee "$REPORT"
+   lsb_release -a
 fi
 
 TOTAL_STEPS=2
@@ -95,8 +96,8 @@ then
   
   I=0
   STEP=1
-  STEP_REPORT="$AKRI_INSTANCE-step-report-$STEP.log" && touch "$STEP_REPORT"
-  while [[ ! $(cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED") && $I -lt 2 ]]
+  STEP_REPORT="$AKRI_INSTANCE-step-report-$STEP.log" && rm "$STEP_REPORT" && touch "$STEP_REPORT"
+  while [[ ! $(cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED") && $I -lt 5 ]]
   do
     I=$((I+1))
     echo -e "\n### executing script step: $STEP  - iteration: $I"
@@ -108,7 +109,7 @@ then
         if [[ "$STEP" -lt "$TOTAL_STEPS" ]]
         then
           STEP=$((STEP+1))
-          STEP_REPORT="akri-step-report-$STEP.log" && touch "$STEP_REPORT"
+          STEP_REPORT="$AKRI_INSTANCE-step-report-$STEP.log" && rm "$STEP_REPORT"  && touch "$STEP_REPORT"
         fi
       fi
     fi
@@ -121,14 +122,16 @@ then
   cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED"
   rm -f "$AKRI_INSTANCE-step-report-*" || true
   
+  #generate report when on Github
   if [[ ! -z "$GITHUB_WORKFLOW" ]]
   then
+    echo -e "### generating execution report..."
     gcloud compute scp $KATA_INSTANCE:$REPORT $REPORT --zone $GCP_ZONE --project=$GCP_PROJECT
     cat README.template.md > README.md
     
     echo '## Execution Report' >> README.md
     echo '```' >> README.md
-    cat $REPORT >> README.md || true
+    cat $REPORT >> README.md
     echo '```' >> README.md
     
     helm repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/'
@@ -137,7 +140,7 @@ then
     
     echo '## Akri Helm Chart' >> README.md
     echo '```' >> README.md
-    cat akri-helm-chart.md >> README.md || true
+    cat akri-helm-chart.md >> README.md
     echo '```' >> README.md
   fi
       
@@ -184,26 +187,26 @@ exec_step1()
   
     if [[ ! -f v4l2loopback-dkms_0.12.5-1_all.deb ]]
     then 
-      echo -e "\n### build kernel module v4l2loopback: " | tee -a "$REPORT"
+      echo -e "\n### build kernel module v4l2loopback: " | tee -a "$REPORT"
       #v0.12.5 is imperative (gstreamer will fail if lower) - 0.12.5 starts with Ubuntu 20.10 or newer
       sudo apt update -y && sudo apt install -y dkms
       sudo apt install -y "linux-modules-extra-$(uname -r)"
       curl http://deb.debian.org/debian/pool/main/v/v4l2loopback/v4l2loopback-dkms_0.12.5-1_all.deb -o v4l2loopback-dkms_0.12.5-1_all.deb
-      sudo dpkg -i v4l2loopback-dkms_0.12.5-1_all.deb | tee -a "$REPORT"
+      sudo dpkg -i v4l2loopback-dkms_0.12.5-1_all.deb | tee -a "$REPORT"
       
     fi
     
-    echo -e "\n### load kernel module v4l2loopback: " | tee -a "$REPORT"
-    sudo modprobe v4l2loopback exclusive_caps=1 devices=2 video_nr=1,2 | tee -a "$REPORT"
+    echo -e "\n### load kernel module v4l2loopback: " | tee -a "$REPORT"
+    sudo modprobe v4l2loopback exclusive_caps=1 devices=2 video_nr=1,2 | tee -a "$REPORT"
    
-    echo -e "\n### check required kernel modules: " | tee -a "$REPORT"
-    lsmod | grep 'videodev' | tee -a "$REPORT"
-    lsmod | grep 'v4l2loopback' | tee -a "$REPORT"
-    modinfo 'v4l2loopback'| grep 'vermagic' | tee -a "$REPORT"
+    echo -e "\n### check required kernel modules: " | tee -a "$REPORT"
+    lsmod | grep 'videodev' | tee -a "$REPORT"
+    lsmod | grep 'v4l2loopback' | tee -a "$REPORT"
+    modinfo 'v4l2loopback'| grep 'vermagic' | tee -a "$REPORT"
   
-    echo -e "\n### check devices: " | tee -a "$REPORT"
-    ls -l /dev/video1 | tee -a "$REPORT"
-    ls -l /dev/video2 | tee -a "$REPORT"
+    echo -e "\n### check devices: " | tee -a "$REPORT"
+    ls -l /dev/video1 | tee -a "$REPORT"
+    ls -l /dev/video2 | tee -a "$REPORT"
     
     if [[ -z $(which gst-launch-1.0) ]]
     then
@@ -256,9 +259,9 @@ exec_step2()
 
   if [[ -z $(sudo ps -ea | grep 'gst-launch') ]]
   then
-  	echo -e "\n### start video streams (in background): " | tee -a "$REPORT"
-  	sudo gst-launch-1.0 -v videotestsrc pattern=ball ! "video/x-raw,width=640,height=480,framerate=10/1" ! avenc_mjpeg ! v4l2sink device=/dev/video1 & | tee -a "$REPORT"
-    sudo gst-launch-1.0 -v videotestsrc pattern=smpte horizontal-speed=1 ! "video/x-raw,width=640,height=480,framerate=10/1" ! avenc_mjpeg ! v4l2sink device=/dev/video2 & | tee -a "$REPORT"
+  	echo -e "\n### start video streams (in background): " | tee -a "$REPORT"
+  	sudo gst-launch-1.0 -v videotestsrc pattern=ball ! "video/x-raw,width=640,height=480,framerate=10/1" ! avenc_mjpeg ! v4l2sink device=/dev/video1 | tee -a "$REPORT" &
+    sudo gst-launch-1.0 -v videotestsrc pattern=smpte horizontal-speed=1 ! "video/x-raw,width=640,height=480,framerate=10/1" ! avenc_mjpeg ! v4l2sink device=/dev/video2 | tee -a "$REPORT" &
     sleep 15s
   fi
   
@@ -282,11 +285,11 @@ exec_step2()
      microk8s status | grep 'microk8s is running'
   fi
   
-  echo -e "\n### enabling microk8s addons: " | tee -a "$REPORT"
-  microk8s enable dns | tee -a "$REPORT"
-  microk8s enable helm3 | tee -a "$REPORT"
-  microk8s enable rbac | tee -a "$REPORT"
-  microk8s enable dashboard | tee -a "$REPORT"
+  echo -e "\n### enabling microk8s addons: " | tee -a "$REPORT"
+  microk8s enable dns | tee -a "$REPORT"
+  microk8s enable helm3 | tee -a "$REPORT"
+  microk8s enable rbac | tee -a "$REPORT"
+  microk8s enable dashboard | tee -a "$REPORT"
   #to add dashboard to kubectl cluster-info
   microk8s kubectl label service/kubernetes-dashboard kubernetes.io/cluster-service=true --namespace kube-system || true
   microk8s status --wait-ready --timeout 120
@@ -295,8 +298,9 @@ exec_step2()
   echo -e "default microk8s token:\n$DEFAULT_MK8S_TOKEN"
   K8S_DASHBOARD_PORT=$(microk8s kubectl get -n 'kube-system' 'service/kubernetes-dashboard' --output=jsonpath='{.spec.ports[0].port}')
   LOCAL_K8S_DASHBOARD_PORT=3443
-  echo -e "Kubernetes dashboard ports - microk8s:  $K8S_DASHBOARD_PORT - local: LOCAL_K8S_DASHBOARD_PORT "
-  microk8s kubectl port-forward -n 'kube-system' 'service/kubernetes-dashboard' "$LOCAL_K8S_DASHBOARD_PORT:$K8S_DASHBOARD_PORT" &
+  echo -e "Kubernetes dashboard ports - gce:  $K8S_DASHBOARD_PORT - local: $LOCAL_K8S_DASHBOARD_PORT "
+  #microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/kubernetes-dashboard' -n default | tee -a "$REPORT"
+  #microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/dashboard-metrics-scraper' -n default | tee -a "$REPORT"
   
   if [[ "$AKRI_INSTALL" == 'true' ]]
   then 
@@ -304,11 +308,11 @@ exec_step2()
     echo -e "\n### checking crictl: "
     which crictl | grep '/usr/local/bin/crictl'
     echo -e "check microk8s containerd socket:"
-    ls -l /var/snap/microk8s/common/run/containerd.sock
-    ls -l /var/snap/microk8s/common/run/containerd.sock  | awk '{print $1}' | grep 'srw'
+    ls -l /var/snap/microk8s/common/run/containerd.sock || true
+    ls -l /var/snap/microk8s/common/run/containerd.sock  | awk '{print $1}' | grep 'srw' || true
   
-    echo -e "\n### install akri chart: " | tee -a "$REPORT"
-    (microk8s helm3 repo list | grep 'akri-helm-charts' || microk8s helm3 repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/') | tee -a "$REPORT"
+    echo -e "\n### install akri chart: " | tee -a "$REPORT"
+    (microk8s helm3 repo list | grep 'akri-helm-charts' || microk8s helm3 repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/') | tee -a "$REPORT"
     
     AKRI_HELM_CRICTL_CONFIGURATION="--set agent.host.crictl=/usr/local/bin/crictl --set agent.host.dockerShimSock=/var/snap/microk8s/common/run/containerd.sock"
                                                       
@@ -319,36 +323,36 @@ exec_step2()
         --set udev.enabled=true \
         --set udev.name=akri-udev-video \
         --set udev.udevRules[0]='KERNEL=="video[0-9]*"' \
-        --set udev.brokerPod.image.repository='ghcr.io/deislabs/akri/udev-video-broker:latest-dev' | tee -a "$REPORT"
+        --set udev.brokerPod.image.repository='ghcr.io/deislabs/akri/udev-video-broker:latest-dev' | tee -a "$REPORT"
     
-    echo -e "\n### waiting for installed chart to get ready: " | tee -a "$REPORT"
-    microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/akri-controller-deployment' -n default || true | tee -a "$REPORT"
+    echo -e "\n### waiting for installed chart to get ready: " | tee -a "$REPORT"
+    microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/akri-controller-deployment' -n default || true | tee -a "$REPORT"
     
-    echo -e "\n### get akri configuration: " | tee -a "$REPORT"
-    microk8s kubectl get -o wide akric | tee -a "$REPORT"
+    echo -e "\n### get akri configuration: " | tee -a "$REPORT"
+    microk8s kubectl get -o wide akric | tee -a "$REPORT"
     
-    echo -e "\n### install video streaming app: " | tee -a "$REPORT"
-    microk8s kubectl apply -f "https://raw.githubusercontent.com/deislabs/akri/main/deployment/samples/akri-video-streaming-app.yaml" | tee -a "$REPORT"
-    microk8s kubectl wait --for=condition=available --timeout=50s 'deployment.apps/akri-video-streaming-app' -n default | tee -a "$REPORT"
+    echo -e "\n### install video streaming app: " | tee -a "$REPORT"
+    microk8s kubectl apply -f "https://raw.githubusercontent.com/deislabs/akri/main/deployment/samples/akri-video-streaming-app.yaml" | tee -a "$REPORT"
+    microk8s kubectl wait --for=condition=available --timeout=50s 'deployment.apps/akri-video-streaming-app' -n default | tee -a "$REPORT"
     
-    echo -e "\n### get pods --all-namespaces: " | tee -a "$REPORT"
-    microk8s kubectl get -o wide pods --all-namespaces | tee -a "$REPORT"
-    echo -e "\n### get daemonsets --all-namespaces: " | tee -a "$REPORT"
-    microk8s kubectl get -o wide daemonsets --all-namespaces | tee -a "$REPORT"
-     echo -e "\n### get services --all-namespaces: " | tee -a "$REPORT"
-    microk8s kubectl get -o wide services --all-namespaces | tee -a "$REPORT"
+    echo -e "\n### get pods --all-namespaces: " | tee -a "$REPORT"
+    microk8s kubectl get -o wide pods --all-namespaces | tee -a "$REPORT"
+    echo -e "\n### get daemonsets --all-namespaces: " | tee -a "$REPORT"
+    microk8s kubectl get -o wide daemonsets --all-namespaces | tee -a "$REPORT"
+     echo -e "\n### get services --all-namespaces: " | tee -a "$REPORT"
+    microk8s kubectl get -o wide services --all-namespaces | tee -a "$REPORT"
    
     
     AKRI_DASHBOARD_PORT=$(microk8s kubectl get service/akri-video-streaming-app --output=jsonpath='{.spec.ports[0].port}')
     echo -e "Akri dashboard port: $AKRI_DASHBOARD_PORT"
     LOCAL_AKRI_DASHBOARD_PORT=12321
-    echo -e "Kubernetes dashboard ports - microk8s:  $AKRI_DASHBOARD_PORT - local: LOCAL_AKRI_DASHBOARD_PORT " | tee -a "$REPORT"
-    microk8s kubectl port-forward -n 'default' 'service/akri-video-streaming-app' "$LOCAL_AKRI_DASHBOARD_PORT:$AKRI_DASHBOARD_PORT" & | tee -a "$REPORT"
+    echo -e "Akri dashboard ports - gce:  $AKRI_DASHBOARD_PORT - local: $LOCAL_AKRI_DASHBOARD_PORT " | tee -a "$REPORT"
+    
+    #microk8s kubectl port-forward -n 'default' 'service/akri-video-streaming-app' "$LOCAL_AKRI_DASHBOARD_PORT:$AKRI_DASHBOARD_PORT" | tee -a "$REPORT" &
+    #microk8s kubectl port-forward -n 'kube-system' 'service/kubernetes-dashboard' "$LOCAL_K8S_DASHBOARD_PORT:$K8S_DASHBOARD_PORT" | tee -a "$REPORT" &
+  
     
   fi
-  
-  echo -e "$STEP_COMPLETED $STEP"
-  echo -e "$SCRIPT_COMPLETED"
   
   echo -e "gcloud command for access to K8s & Akri dashboards gcloud compute ssh $AKRI_INSTANCE --zone=$GCP_ZONE"  ' --project=$GCP_PROJECT ' "--ssh-flag='-L $LOCAL_K8S_DASHBOARD_PORT:localhost:$LOCAL_K8S_DASHBOARD_PORT -L $LOCAL_AKRI_DASHBOARD_PORT:localhost:$LOCAL_AKRI_DASHBOARD_PORT'"  | tee -a "$REPORT"
   echo -e "use authentication token: $(microk8s config | grep token | awk '{print $2}')" | tee -a "$REPORT"
@@ -374,12 +378,16 @@ exec_step2()
   echo -e " " >> "$REPORT.tmp"
 
   echo -e "### ubuntu version:" >> "$REPORT.tmp"
+  echo -e "$(uname -a)" >> "$REPORT.tmp"
   echo -e "$(lsb_release -a)" >> "$REPORT.tmp"
   echo -e " " >> "$REPORT.tmp"
    
   cat $REPORT >> "$REPORT.tmp"
   rm "$REPORT"
   mv "$REPORT.tmp" $REPORT
+  
+  echo -e "$STEP_COMPLETED $STEP"
+  echo -e "$SCRIPT_COMPLETED"
   
 }
 
