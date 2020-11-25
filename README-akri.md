@@ -14,7 +14,7 @@
 
 ## Goal
 
-This repository delivers a fully scripted workflow (install + run - based on [microk8s-akri.yml](.github/workflows/microk8s-akri.yml) and [microk8s-akri.sh](sh/microk8s-akri.sh)) on GitHub CI/CD of the [end-to-end demo](https://github.com/deislabs/akri/blob/main/docs/end-to-end-demo.md) recently published by the [Akri project](https://github.com/deislabs/akri): it illustrates the use of video cameras (mocked here by test video streams) in Kubernetes edge workloads. The badge above gives status of our last execution (see also section [Execution Report](README.md#execution-report)) and details for all previous runs can be found in the [Actions tab](https://github.com/didier-durand/microk8s-akri/actions)
+This repository delivers a fully scripted workflow (install + run - based on [microk8s-akri.yml](.github/workflows/microk8s-akri.yml) and [microk8s-akri.sh](sh/microk8s-akri.sh)) on GitHub CI/CD of the [end-to-end demo](https://github.com/deislabs/akri/blob/main/docs/end-to-end-demo.md) recently published by the [Akri project](https://github.com/deislabs/akri): it illustrates the use of video cameras (mocked here by test video streams) in Kubernetes edge workloads. The badge above gives status of our last execution (see also section [Execution Report](README.md#execution-report)) and details for all previous runs can be found in the [Actions tab](https://github.com/didier-durand/microk8s-akri/actions).
 
 Akri by Microsoft follows the Greek-based naming tradition of the Kubernetes arena: "akri" means ["edge" in Greek](https://en.wiktionary.org/wiki/%CE%AC%CE%BA%CF%81%CE%B7). Interestingly, the Akri acronym can also stand for "A Kubernetes Resource Interface". So, it's now clear that the project is all about edge computing and the [Internet of Things (IoT)](https://en.wikipedia.org/wiki/Internet_of_things) with its [30+ billions of connected objects](https://iot-analytics.com/state-of-the-iot-2020-12-billion-iot-connections-surpassing-non-iot-for-the-first-time/) to emerge in next five years: 4 connected objects per human being worldwide in 2025 as predicted by IoT Analytics.
 
@@ -92,7 +92,7 @@ Then, fork our repository and define the required [Github Secrets](https://docs.
 
 To easily use the workflow from Github, you can launch it with the [manual dispatch feature of Github](https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/) that you can see as a launch button (the green one in the picture below) in the Action tab of your fork.
 
-<img src="img/microk8s-akri-launch-button.jpg" height="250">
+<img src="img/launch-button.jpg" height="250">
 
 The workflow will execute all the steps described above and keep the instance up and running for further exploration. Up to you to delete it via Google Cloud console when it's no longer needed. When scheduled automatically, it will terminate gracefully after all validation tests described are completed: it will then delete the GCE instance. 
 
