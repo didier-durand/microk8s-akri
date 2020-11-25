@@ -326,7 +326,7 @@ exec_step2()
         --set udev.brokerPod.image.repository='ghcr.io/deislabs/akri/udev-video-broker:latest-dev' | tee -a "$REPORT"
     
     echo -e "\n### waiting for installed chart to get ready: " | tee -a "$REPORT"
-    microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/akri-controller-deployment' -n default || true | tee -a "$REPORT"
+    microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/akri-controller-deployment' -n default | tee -a "$REPORT"
     
     echo -e "\n### get akri configuration: " | tee -a "$REPORT"
     microk8s kubectl get -o wide akric | tee -a "$REPORT"
