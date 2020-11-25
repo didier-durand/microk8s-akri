@@ -40,20 +40,13 @@ jobs:
         gcloud components update
         echo '--- gcloud version ---'
         gcloud version
-    
+                
     - name: install MicroK8s + Akri
       env: 
         AKRI_GCE_DELETE: true
         GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
       run: |-
         bash sh/microk8s-akri.sh
-        
-    - name: generate Akri helm chart
-      run: |   
-        echo -e "### helm path: $(which helm) - version: $(helm version)"
-        helm repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/'
-        #helm template --debug 'akri-helm-charts/akri-dev' | tee > akri-chart-template.md
-        helm template --debug 'akri-helm-charts/akri-dev'
                          
     - name: commit back changed files
       run: | 
