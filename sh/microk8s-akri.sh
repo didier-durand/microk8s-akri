@@ -128,7 +128,7 @@ then
   if [[ ! -z "$GITHUB_WORKFLOW" ]]
   then
     echo -e "### generating execution report..."
-    gcloud compute scp $KATA_INSTANCE:$REPORT $REPORT --zone $GCP_ZONE --project=$GCP_PROJECT
+    gcloud compute scp $AKRI_INSTANCE:$REPORT $REPORT --zone $GCP_ZONE --project=$GCP_PROJECT
     cat README.template.md > README.md
     
     
