@@ -138,7 +138,7 @@ then
     echo '```' >> README.md
     
     helm repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/'
-    helm version | tee akri-helm-chart.md
+    helm version | tee akri-helm-chart.md
     helm template --debug 'akri-helm-charts/akri-dev' | tee -a akri-helm-chart.md
     
     echo '## Akri Helm Chart' >> README.md
