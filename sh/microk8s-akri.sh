@@ -341,7 +341,7 @@ exec_step2()
     echo -e "\n### get services --all-namespaces: " | tee -a "$REPORT"
     microk8s kubectl get -o wide services --all-namespaces | tee -a "$REPORT"
    
-    
+    echo -e " "
     AKRI_DASHBOARD_PORT=$(microk8s kubectl get service/akri-video-streaming-app --output=jsonpath='{.spec.ports[0].port}')
     LOCAL_AKRI_DASHBOARD_PORT=12321
     echo -e "Akri dashboard ports - gce:  $AKRI_DASHBOARD_PORT - local: $LOCAL_AKRI_DASHBOARD_PORT " | tee -a "$REPORT"
@@ -363,10 +363,10 @@ exec_step2()
   curl http://localhost:12321 | grep 'Akri'
   curl http://localhost:12321 | grep 'camera_frame_feed'
   
-  echo -e "gcloud command for access to K8s & Akri dashboards gcloud compute ssh $AKRI_INSTANCE --zone=$GCP_ZONE"  ' --project=$GCP_PROJECT ' "--ssh-flag='-L $LOCAL_K8S_DASHBOARD_PORT:localhost:$LOCAL_K8S_DASHBOARD_PORT -L $LOCAL_AKRI_DASHBOARD_PORT:localhost:$LOCAL_AKRI_DASHBOARD_PORT'"  | tee -a "$REPORT"
-  echo -e "use authentication token: $(microk8s config | grep token | awk '{print $2}')" | tee -a "$REPORT"
-  echo -e "k8s dashboard: https://localhost:$LOCAL_K8S_DASHBOARD_PORT - akri dashboard:  https://localhost:$LOCAL_AKRI_DASHBOARD_PORT" | tee -a "$REPORT"
-  echo -e "akri dashboard:  http://localhost:$LOCAL_AKRI_DASHBOARD_PORT" | tee -a "$REPORT"
+  echo -e "gcloud command for port-forwarding of K8s & Akri dashboards:  gcloud compute ssh $AKRI_INSTANCE --zone=$GCP_ZONE"  ' --project=$GCP_PROJECT ' "--ssh-flag='-L $LOCAL_K8S_DASHBOARD_PORT:localhost:$LOCAL_K8S_DASHBOARD_PORT -L $LOCAL_AKRI_DASHBOARD_PORT:localhost:$LOCAL_AKRI_DASHBOARD_PORT'"  | tee -a "$REPORT"
+  echo -e "K8s authentication token: $(microk8s config | grep token | awk '{print $2}')" | tee -a "$REPORT"
+  echo -e "K8s dashboard: https://localhost:$LOCAL_K8S_DASHBOARD_PORT" | tee -a "$REPORT"
+  echo -e "Akri dashboard:  http://localhost:$LOCAL_AKRI_DASHBOARD_PORT" | tee -a "$REPORT"
   
   
   echo -e "\n### prepare execution report:"
@@ -376,10 +376,6 @@ exec_step2()
 
   echo -e "### microk8s snap version:" >> "$REPORT.tmp"
   echo -e "$(sudo snap list | grep 'microk8s')" >> "$REPORT.tmp"
-  echo -e " " >> "$REPORT.tmp"
-  
-  echo -e "### crictl version:" >> "$REPORT.tmp"
-  echo -e "$(crictl version)" >> "$REPORT.tmp"
   echo -e " " >> "$REPORT.tmp"
   
   echo -e "### gstreamer version:" >> "$REPORT.tmp"
