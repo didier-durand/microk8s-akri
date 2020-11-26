@@ -14,7 +14,7 @@
 
 ## Goal
 
-This repository delivers a fully scripted workflow (install + run - based on [microk8s-akri.yml](.github/workflows/microk8s-akri.yml) and [microk8s-akri.sh](sh/microk8s-akri.sh)) on GitHub CI / CD of the [end-to-end demo](https://github.com/deislabs/akri/blob/main/docs/end-to-end-demo.md) recently published by the [Akri project](https://github.com/deislabs/akri): it illustrates the use of video cameras (mocked here by test video streams) in Kubernetes edge workloads. The badge above gives status of our last execution (see also section [Execution Report](README.md#execution-report)) and details for all previous runs can be found in the [Actions tab](https://github.com/didier-durand/microk8s-akri/actions).
+This repository delivers a fully scripted workflow (install + run - based on [microk8s-akri.yml](.github/workflows/microk8s-akri.yml) and [microk8s-akri.sh](sh/microk8s-akri.sh)) on GitHub CI / CD of the [end-to-end demo](https://github.com/deislabs/akri/blob/main/docs/end-to-end-demo.md) recently published by the [Akri project](https://github.com/deislabs/akri): it illustrates the use of video cameras (mocked here by test video streams) in Kubernetes edge workloads. The badge above gives status of our last execution (see also section [Execution Report](README.md#execution-report) for log excerpts) and details for all previous runs can be found in the [Actions tab](https://github.com/didier-durand/microk8s-akri/actions). Section [Akri Helm Chart](README.md#akri-helm-chart) provides the fully expanded version of the K8s objects used in this showcase.
 
 Akri by Microsoft follows the Greek-based naming tradition of the Kubernetes arena: "akri" means ["edge" in Greek](https://en.wiktionary.org/wiki/%CE%AC%CE%BA%CF%81%CE%B7). Interestingly, the Akri acronym can also stand for "A Kubernetes Resource Interface". So, it's now clear that the project is all about edge computing and the [Internet of Things (IoT)](https://en.wikipedia.org/wiki/Internet_of_things) with its [30+ billions of connected objects](https://iot-analytics.com/state-of-the-iot-2020-12-billion-iot-connections-surpassing-non-iot-for-the-first-time/) to emerge in next five years: 4 connected objects per human being worldwide in 2025 as predicted by IoT Analytics.
 
@@ -109,6 +109,23 @@ To easily use the workflow from Github, you can launch it with the [manual dispa
 The workflow will execute all the steps described above and keep the instance up and running for further exploration. Up to you to delete it via Google Cloud console when it's no longer needed. When scheduled automatically, it will terminate gracefully after all validation tests described are completed: it will then delete the GCE instance. 
 ## Execution Report
 ```
+### execution date: Thu Nov 26 14:31:02 UTC 2020
+ 
+### microk8s snap version:
+microk8s          v1.19.3    1791   1.19/stable      canonical*         classic
+ 
+### gstreamer version:
+gst-launch-1.0 version 1.16.2
+GStreamer 1.16.2
+https://launchpad.net/distros/ubuntu/+source/gstreamer1.0
+ 
+### ubuntu version:
+Linux microk8s-akri 5.4.0-1029-gcp #31-Ubuntu SMP Wed Oct 21 19:38:01 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
+Distributor ID:	Ubuntu
+Description:	Ubuntu 20.04.1 LTS
+Release:	20.04
+Codename:	focal
+ 
 ### execution date: Thu Nov 26 14:02:13 UTC 2020
  
 ### microk8s snap version:
@@ -323,10 +340,104 @@ gcloud command for access to K8s & Akri dashboards gcloud compute ssh microk8s-a
 use authentication token: eFlnRjAvWnBmRmNtMnppTHdRdFRPSVN3bEFKRGpzaU5lZko1ZXluampsQT0K
 k8s dashboard: https://localhost:3443 - akri dashboard:  https://localhost:12321
 akri dashboard:  http://localhost:12321
+
+### load kernel module v4l2loopback: 
+
+### check required kernel modules: 
+videodev              225280  5 v4l2loopback
+mc                     53248  1 videodev
+v4l2loopback           40960  4
+videodev              225280  5 v4l2loopback
+vermagic:       5.4.0-1029-gcp SMP mod_unload 
+
+### check devices: 
+crw-rw---- 1 root video 81, 0 Nov 26 14:27 /dev/video1
+crw-rw---- 1 root video 81, 1 Nov 26 14:27 /dev/video2
+
+### enabling microk8s addons: 
+Addon dns is already enabled.
+Addon helm3 is already enabled.
+Addon rbac is already enabled.
+Addon dashboard is already enabled.
+
+### install akri chart: 
+akri-helm-charts	https://deislabs.github.io/akri/
+
+### waiting for installed chart to get ready: 
+deployment.apps/akri-controller-deployment condition met
+
+### get akri configuration: 
+NAME              CAPACITY   AGE
+akri-udev-video   1          30m
+
+### install video streaming app: 
+deployment.apps/akri-video-streaming-app unchanged
+service/akri-video-streaming-app unchanged
+deployment.apps/akri-video-streaming-app condition met
+
+### get pods --all-namespaces: 
+NAMESPACE     NAME                                          READY   STATUS    RESTARTS   AGE   IP            NODE            NOMINATED NODE   READINESS GATES
+kube-system   coredns-86f78bb79c-g5wlk                      1/1     Running   0          31m   10.1.54.67    microk8s-akri   <none>           <none>
+kube-system   metrics-server-8bbfb4bdb-6nghr                1/1     Running   0          31m   10.1.54.68    microk8s-akri   <none>           <none>
+kube-system   calico-node-tcr76                             1/1     Running   2          33m   10.128.0.42   microk8s-akri   <none>           <none>
+kube-system   calico-kube-controllers-847c8c99d-ckkp8       1/1     Running   1          33m   10.1.54.71    microk8s-akri   <none>           <none>
+kube-system   kubernetes-dashboard-7ffd448895-w7ld4         1/1     Running   0          31m   10.1.54.69    microk8s-akri   <none>           <none>
+kube-system   dashboard-metrics-scraper-6c4568dc68-n95j8    1/1     Running   0          31m   10.1.54.70    microk8s-akri   <none>           <none>
+default       akri-agent-daemonset-vl4kl                    1/1     Running   0          30m   10.128.0.42   microk8s-akri   <none>           <none>
+default       akri-controller-deployment-5b4bb5cbb5-k6chl   1/1     Running   0          30m   10.1.54.72    microk8s-akri   <none>           <none>
+default       akri-udev-video-aa247f-pod                    1/1     Running   0          30m   10.1.54.73    microk8s-akri   <none>           <none>
+default       akri-udev-video-018417-pod                    1/1     Running   0          30m   10.1.54.74    microk8s-akri   <none>           <none>
+default       akri-video-streaming-app-fd5f4cb7d-qjqdz      1/1     Running   0          29m   10.1.54.75    microk8s-akri   <none>           <none>
+
+### get daemonsets --all-namespaces: 
+NAMESPACE     NAME                   DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE   CONTAINERS    IMAGES                                   SELECTOR
+kube-system   calico-node            1         1         1       1            1           kubernetes.io/os=linux   33m   calico-node   calico/node:v3.13.2                      k8s-app=calico-node
+default       akri-agent-daemonset   1         1         1       1            1           kubernetes.io/os=linux   30m   akri-agent    ghcr.io/deislabs/akri/agent:latest-dev   name=akri-agent
+
+### get services --all-namespaces: 
+NAMESPACE     NAME                         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                  AGE   SELECTOR
+default       kubernetes                   ClusterIP   10.152.183.1     <none>        443/TCP                  33m   <none>
+kube-system   kube-dns                     ClusterIP   10.152.183.10    <none>        53/UDP,53/TCP,9153/TCP   31m   k8s-app=kube-dns
+kube-system   metrics-server               ClusterIP   10.152.183.43    <none>        443/TCP                  31m   k8s-app=metrics-server
+kube-system   kubernetes-dashboard         ClusterIP   10.152.183.61    <none>        443/TCP                  31m   k8s-app=kubernetes-dashboard
+kube-system   dashboard-metrics-scraper    ClusterIP   10.152.183.97    <none>        8000/TCP                 31m   k8s-app=dashboard-metrics-scraper
+default       akri-udev-video-aa247f-svc   ClusterIP   10.152.183.66    <none>        80/TCP                   29m   akri.sh/instance=akri-udev-video-aa247f,controller=akri.sh
+default       akri-udev-video-svc          ClusterIP   10.152.183.110   <none>        80/TCP                   29m   akri.sh/configuration=akri-udev-video,controller=akri.sh
+default       akri-udev-video-018417-svc   ClusterIP   10.152.183.148   <none>        80/TCP                   29m   akri.sh/instance=akri-udev-video-018417,controller=akri.sh
+default       akri-video-streaming-app     NodePort    10.152.183.12    <none>        80:31039/TCP             29m   app=akri-video-streaming-app
+Akri dashboard ports - gce:  80 - local: 12321 
+K8s dashboard ports - gce:  443 - local: 3443 
+<html>
+  <head>
+    <title>Akri Demo</title>
+  </head>
+  <body>
+    <div style="max-width: 800px;  margin: auto;text-align:center">
+      <h1>Akri Demo</h1>
+      <div style="display: inline-block;clear:both;margin-bottom:30px">
+        <img src="/camera_frame_feed/0" style="width:480px">
+      </div>
+      <ul style="display: block;list-style-type: none;padding:0;">
+        
+        <li style="display: inline-block; padding: 0 25">
+          <img src="/camera_frame_feed/1" style="width:200px">
+        </li>
+        
+        <li style="display: inline-block; padding: 0 25">
+          <img src="/camera_frame_feed/2" style="width:200px">
+        </li>
+        
+      </ul>
+    </div>
+  </body>
+</html>gcloud command for port-forwarding of K8s & Akri dashboards:  gcloud compute ssh microk8s-akri --zone=us-central1-c  --project=$GCP_PROJECT  --ssh-flag='-L 3443:localhost:3443 -L 12321:localhost:12321'
+K8s authentication token: eFlnRjAvWnBmRmNtMnppTHdRdFRPSVN3bEFKRGpzaU5lZko1ZXluampsQT0K
+K8s dashboard: https://localhost:3443
+Akri dashboard:  http://localhost:12321
 ```
 ## Akri Helm Chart
 ```
-### generation date: Thu Nov 26 14:02:24 UTC 2020
+### generation date: Thu Nov 26 14:31:12 UTC 2020
  
 version.BuildInfo{Version:"v3.4.1", GitCommit:"c4e74854886b2efe3321e185578e6db9be0a6e29", GitTreeState:"clean", GoVersion:"go1.14.11"}
 ---
