@@ -362,8 +362,8 @@ exec_step2()
   fi
   
   curl http://localhost:12321 | tee -a "$REPORT"
-  curl http://localhost:12321 | grep 'Akri'
-  curl http://localhost:12321 | grep 'camera_frame_feed'
+  curl http://localhost:12321 | grep 'Akri'
+  curl http://localhost:12321 | grep 'camera_frame_feed'
   
   echo -e "gcloud command for access to K8s & Akri dashboards gcloud compute ssh $AKRI_INSTANCE --zone=$GCP_ZONE"  ' --project=$GCP_PROJECT ' "--ssh-flag='-L $LOCAL_K8S_DASHBOARD_PORT:localhost:$LOCAL_K8S_DASHBOARD_PORT -L $LOCAL_AKRI_DASHBOARD_PORT:localhost:$LOCAL_AKRI_DASHBOARD_PORT'"  | tee -a "$REPORT"
   echo -e "use authentication token: $(microk8s config | grep token | awk '{print $2}')" | tee -a "$REPORT"
