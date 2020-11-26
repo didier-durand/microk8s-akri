@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 * [Goal](README.md#goal)
-* [Kubernetes On The Edge - Akri Architecture](README.md#kata-containers---rationale)
+* [Kubernetes On The Edge - Akri Architecture](README.md#kubernetes-on-the-edge-akri-architecture)
 * [Workflow Actions](README.md##workflow-actions)
 * [Fork & Run](README.md#how-to-fork--run)
 * [Execution Report](README.md#execution-report)
