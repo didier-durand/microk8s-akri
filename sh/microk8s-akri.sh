@@ -135,8 +135,6 @@ then
     echo '## Execution Report' >> README.md
     echo '```' >> README.md
     cat $REPORT >> README.md
-    echo 'Akri check: ' >> README.md
-    curl http://localhost:12321 >> README.md
     echo '```' >> README.md
     
     helm repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/'
