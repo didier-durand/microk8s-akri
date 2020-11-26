@@ -97,6 +97,3 @@ To easily use the workflow from Github, you can launch it with the [manual dispa
 <img src="img/launch-button.jpg" height="250">
 
 The workflow will execute all the steps described above and keep the instance up and running for further exploration. Up to you to delete it via Google Cloud console when it's no longer needed. When scheduled automatically, it will terminate gracefully after all validation tests described are completed: it will then delete the GCE instance. 
-
-## Execution Report
-
