@@ -28,6 +28,13 @@ The workflow execution finally delivers the command(s) needed to obtain remote a
 
 Feel free to fork and re-use! (Of course, if you like it, please, give it a star)
 
+When you trigger the execution of the workflow, you will be able to reach,from your local browser 2 different dashboards produced by the pods of your MicroK8s cluster running on GCE:
+
+1. the Akri demo application: at the bottom, images of the 2 fake cameras at the bottom (the first with a bouncing ball, the second one with a colour carrousel). The top image shifts from one to the other every few seconds.
+2. the standard Kubernetes dashboard showing all details above the 11 active pods
+
+<img src="img/akri-app.jpg" height="250">  <img src="img/akri-k8s-dashboard.jpg" height="250"> 
+
 ## Kubernetes On The Edge - Akri Architecture
 
 Recent [announcement by NIVIDIA](https://nvidianews.nvidia.com/news/global-technology-leaders-adopt-nvidia-egx-edge-ai-platform-to-infuse-intelligence-at-the-edge-of-every-business) demonstrates that [Moore's Law](https://en.wikipedia.org/wiki/Moore%27s_law) remains in full force: installing a K8s microcluster on the edge is definitely possible now! The needed computing power with minimal form factor is available today and can serve even demanding edge ML / AI workloads.
