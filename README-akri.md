@@ -33,7 +33,7 @@ When you trigger the execution of the workflow, you will be able to reach,from y
 1. the Akri demo application: at the bottom, images of the 2 fake cameras at the bottom (the first with a bouncing ball, the second one with a colour carrousel). The top image shifts from one to the other every few seconds.
 2. the standard Kubernetes dashboard showing all details above the 11 active pods
 
-<img src="img/akri-app.jpg" height="250">  <img src="img/akri-k8s-dashboard.jpg" height="250"> 
+<img src="img/akri-app.jpg" height="300">  <img src="img/akri-k8s-dashboard.jpg" height="300"> 
 
 ## Kubernetes On The Edge - Akri Architecture
 
