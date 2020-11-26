@@ -143,6 +143,8 @@ then
     
     echo '## Akri Helm Chart' >> README.md
     echo '```' >> README.md
+    echo -e "### generation date: $(date --utc)" >> README.md
+    echo -e " " >> README.md
     cat akri-helm-chart.md >> README.md
     echo '```' >> README.md
   fi
