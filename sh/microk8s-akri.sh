@@ -31,6 +31,8 @@ if [[ -z ${GCP_PROJECT+x} && ! "$ON_GCE" == *'Google'* ]]    ; then echo "ERROR:
 if [[ -z ${GCP_ZONE+x} ]]                                    ; then GCP_ZONE='us-central1-c'                   ; fi ; echo "gcp zone: $GCP_ZONE"
 if [[ -z ${AKRI_GCE_DELETE+x} ]]                             ; then AKRI_GCE_DELETE='false'                    ; fi ; echo "akri gce delete: $AKRI_GCE_DELETE"
 
+if [[ -z ${MK8S_VERSION+x} ]]                                ; then MK8S_VERSION='1.19/stable'                 ; fi ; echo "microk8s version: $MK8S_VERSION"
+
 if [[ -z ${AKRI_INSTALL+x} ]]                                ; then AKRI_INSTALL='true'                        ; fi ; echo "akri install: $AKRI_INSTALL"
 if [[ -z ${VIDEO_INSTALL+x} ]]                               ; then VIDEO_INSTALL='true'                       ; fi ; echo "video install: $VIDEO_INSTALL"
 
@@ -121,6 +123,8 @@ then
   done
   cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED"
   rm -f "$AKRI_INSTANCE-step-report-*" || true
+  curl http://localhost:12321 | grep 'Akri Demo'
+  curl http://localhost:12321 | grep 'camera_frame_feed'
   
   #generate report when on Github
   if [[ ! -z "$GITHUB_WORKFLOW" ]]
@@ -129,9 +133,12 @@ then
     gcloud compute scp $KATA_INSTANCE:$REPORT $REPORT --zone $GCP_ZONE --project=$GCP_PROJECT
     cat README.template.md > README.md
     
+    
     echo '## Execution Report' >> README.md
     echo '```' >> README.md
     cat $REPORT >> README.md
+    echo 'Akri check: ' >> README.md
+    curl http://localhost:12321 >> README.md
     echo '```' >> README.md
     
     helm repo add 'akri-helm-charts' 'https://deislabs.github.io/akri/'
@@ -174,7 +181,7 @@ exec_step1()
   if [[ -z $(which crictl) ]]
   then
     echo -e "\n### installing crictl: "
-    VERSION="v1.19.0"
+    VERSION="v1.17.0"
     TAR="crictl-${VERSION}-linux-amd64.tar.gz"
     curl -L "https://github.com/kubernetes-sigs/cri-tools/releases/download/$VERSION/$TAR" --output "$TAR"
     sudo tar zxvf "$TAR" -C /usr/local/bin
@@ -222,10 +229,9 @@ exec_step1()
   if [[ -z $(which microk8s) ]]
   then
     echo -e "\n### install microk8s: "
-    #sudo snap install 'microk8s' --classic --channel="$MK8S_VERSION"
-    sudo snap install 'microk8s' --classic --channel=latest/edge
+    sudo snap install 'microk8s' --classic --channel="$MK8S_VERSION"
     sudo snap list | grep 'microk8s'
-    sudo microk8s status --wait-ready --timeout 120
+    sudo microk8s status --wait-ready
     sudo usermod -a -G 'microk8s' "$USER"
     echo -e "groups for user: $(groups)"
   fi
@@ -235,9 +241,10 @@ exec_step1()
   if [[ -f /var/run/reboot-required ]]
   then
     echo 'WARNING: reboot required. Reboot in 2s...'
-    sleep 2s
-    sudo reboot
+    nohup sudo -b bash -c 'sleep 2s; reboot' &
   fi
+  
+  exit
 
 }
 
@@ -260,8 +267,8 @@ exec_step2()
   if [[ -z $(sudo ps -ea | grep 'gst-launch') ]]
   then
   	echo -e "\n### start video streams (in background): " | tee -a "$REPORT"
-  	sudo gst-launch-1.0 -v videotestsrc pattern=ball ! "video/x-raw,width=640,height=480,framerate=10/1" ! avenc_mjpeg ! v4l2sink device=/dev/video1 | tee -a "$REPORT" &
-    sudo gst-launch-1.0 -v videotestsrc pattern=smpte horizontal-speed=1 ! "video/x-raw,width=640,height=480,framerate=10/1" ! avenc_mjpeg ! v4l2sink device=/dev/video2 | tee -a "$REPORT" &
+  	(sudo nohup gst-launch-1.0 -v videotestsrc pattern=ball ! "video/x-raw,width=640,height=480,framerate=10/1" ! avenc_mjpeg ! v4l2sink device=/dev/video1 | tee -a "$REPORT") >> nohup.out 2>> nohup.err < /dev/null &
+    (sudo nohup gst-launch-1.0 -v videotestsrc pattern=smpte horizontal-speed=1 ! "video/x-raw,width=640,height=480,framerate=10/1" ! avenc_mjpeg ! v4l2sink device=/dev/video2 | tee -a "$REPORT") >> nohup.out 2>> nohup.err < /dev/null &
     sleep 15s
   fi
   
@@ -281,7 +288,7 @@ exec_step2()
      echo -e "\n### restarting microk8s: "
      microk8s start
      echo -e "\n### wait for cluster ready: "
-     microk8s status --wait-ready --timeout 120
+     microk8s status --wait-ready
      microk8s status | grep 'microk8s is running'
   fi
   
@@ -290,17 +297,9 @@ exec_step2()
   microk8s enable helm3 | tee -a "$REPORT"
   microk8s enable rbac | tee -a "$REPORT"
   microk8s enable dashboard | tee -a "$REPORT"
-  #to add dashboard to kubectl cluster-info
-  microk8s kubectl label service/kubernetes-dashboard kubernetes.io/cluster-service=true --namespace kube-system || true
-  microk8s status --wait-ready --timeout 120
+  microk8s status --wait-ready
   
-  DEFAULT_MK8S_TOKEN=$(microk8s kubectl -n kube-system get secret --output=jsonpath='{.data.token}' "$(microk8s kubectl -n kube-system get secret | grep 'default-token' | cut -d " " -f1)")
-  echo -e "default microk8s token:\n$DEFAULT_MK8S_TOKEN"
-  K8S_DASHBOARD_PORT=$(microk8s kubectl get -n 'kube-system' 'service/kubernetes-dashboard' --output=jsonpath='{.spec.ports[0].port}')
-  LOCAL_K8S_DASHBOARD_PORT=3443
-  echo -e "Kubernetes dashboard ports - gce:  $K8S_DASHBOARD_PORT - local: $LOCAL_K8S_DASHBOARD_PORT "
-  #microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/kubernetes-dashboard' -n default | tee -a "$REPORT"
-  #microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/dashboard-metrics-scraper' -n default | tee -a "$REPORT"
+  sleep 60s
   
   if [[ "$AKRI_INSTALL" == 'true' ]]
   then 
@@ -324,40 +323,52 @@ exec_step2()
         --set udev.name=akri-udev-video \
         --set udev.udevRules[0]='KERNEL=="video[0-9]*"' \
         --set udev.brokerPod.image.repository='ghcr.io/deislabs/akri/udev-video-broker:latest-dev' | tee -a "$REPORT"
+        
+    sleep 60s
     
     echo -e "\n### waiting for installed chart to get ready: " | tee -a "$REPORT"
-    microk8s kubectl wait --for=condition=available --timeout=120s 'deployment.apps/akri-controller-deployment' -n default | tee -a "$REPORT"
+    microk8s kubectl wait --for=condition=available --timeout=300s 'deployment.apps/akri-controller-deployment' -n default | tee -a "$REPORT"
     
     echo -e "\n### get akri configuration: " | tee -a "$REPORT"
     microk8s kubectl get -o wide akric | tee -a "$REPORT"
     
     echo -e "\n### install video streaming app: " | tee -a "$REPORT"
     microk8s kubectl apply -f "https://raw.githubusercontent.com/deislabs/akri/main/deployment/samples/akri-video-streaming-app.yaml" | tee -a "$REPORT"
-    microk8s kubectl wait --for=condition=available --timeout=50s 'deployment.apps/akri-video-streaming-app' -n default | tee -a "$REPORT"
+    microk8s kubectl wait --for=condition=available --timeout=300s 'deployment.apps/akri-video-streaming-app' -n default | tee -a "$REPORT"
     
     echo -e "\n### get pods --all-namespaces: " | tee -a "$REPORT"
     microk8s kubectl get -o wide pods --all-namespaces | tee -a "$REPORT"
     echo -e "\n### get daemonsets --all-namespaces: " | tee -a "$REPORT"
     microk8s kubectl get -o wide daemonsets --all-namespaces | tee -a "$REPORT"
-     echo -e "\n### get services --all-namespaces: " | tee -a "$REPORT"
+    echo -e "\n### get services --all-namespaces: " | tee -a "$REPORT"
     microk8s kubectl get -o wide services --all-namespaces | tee -a "$REPORT"
    
     
     AKRI_DASHBOARD_PORT=$(microk8s kubectl get service/akri-video-streaming-app --output=jsonpath='{.spec.ports[0].port}')
-    echo -e "Akri dashboard port: $AKRI_DASHBOARD_PORT"
     LOCAL_AKRI_DASHBOARD_PORT=12321
     echo -e "Akri dashboard ports - gce:  $AKRI_DASHBOARD_PORT - local: $LOCAL_AKRI_DASHBOARD_PORT " | tee -a "$REPORT"
+    (nohup microk8s kubectl port-forward -n 'default' 'service/akri-video-streaming-app' "$LOCAL_AKRI_DASHBOARD_PORT:$AKRI_DASHBOARD_PORT" | tee -a "$REPORT") >> nohup.out 2>> nohup.err < /dev/null &
     
-    #microk8s kubectl port-forward -n 'default' 'service/akri-video-streaming-app' "$LOCAL_AKRI_DASHBOARD_PORT:$AKRI_DASHBOARD_PORT" | tee -a "$REPORT" &
-    #microk8s kubectl port-forward -n 'kube-system' 'service/kubernetes-dashboard' "$LOCAL_K8S_DASHBOARD_PORT:$K8S_DASHBOARD_PORT" | tee -a "$REPORT" &
+    K8S_DASHBOARD_PORT=$(microk8s kubectl get -n kube-system service/kubernetes-dashboard --output=jsonpath='{.spec.ports[0].port}')
+    LOCAL_K8S_DASHBOARD_PORT=3443
+    echo -e "K8s dashboard ports - gce:  $K8S_DASHBOARD_PORT - local: $LOCAL_K8S_DASHBOARD_PORT " | tee -a "$REPORT"
+    (nohup microk8s kubectl port-forward -n 'kube-system' 'service/kubernetes-dashboard' "$LOCAL_K8S_DASHBOARD_PORT:$K8S_DASHBOARD_PORT" | tee -a "$REPORT") >> nohup.out 2>> nohup.err < /dev/null &
+    
+    DEFAULT_MK8S_TOKEN=$(microk8s kubectl -n kube-system get secret --output=jsonpath='{.data.token}' "$(microk8s kubectl -n kube-system get secret | grep 'default-token' | cut -d " " -f1)")
+    echo -e "default microk8s token:\n$DEFAULT_MK8S_TOKEN"
+    K8S_DASHBOARD_PORT=$(microk8s kubectl get -n 'kube-system' 'service/kubernetes-dashboard' --output=jsonpath='{.spec.ports[0].port}')
+    LOCAL_K8S_DASHBOARD_PORT=3443
   
-    
   fi
+  
+  curl http://localhost:12321 | tee -a "$REPORT"
+  curl http://localhost:12321 | grep 'Akri'
+  curl http://localhost:12321 | grep 'camera_frame_feed'
   
   echo -e "gcloud command for access to K8s & Akri dashboards gcloud compute ssh $AKRI_INSTANCE --zone=$GCP_ZONE"  ' --project=$GCP_PROJECT ' "--ssh-flag='-L $LOCAL_K8S_DASHBOARD_PORT:localhost:$LOCAL_K8S_DASHBOARD_PORT -L $LOCAL_AKRI_DASHBOARD_PORT:localhost:$LOCAL_AKRI_DASHBOARD_PORT'"  | tee -a "$REPORT"
   echo -e "use authentication token: $(microk8s config | grep token | awk '{print $2}')" | tee -a "$REPORT"
   echo -e "k8s dashboard: https://localhost:$LOCAL_K8S_DASHBOARD_PORT - akri dashboard:  https://localhost:$LOCAL_AKRI_DASHBOARD_PORT" | tee -a "$REPORT"
-  echo -e "akri dashboard:  https://localhost:$LOCAL_AKRI_DASHBOARD_PORT" | tee -a "$REPORT"
+  echo -e "akri dashboard:  http://localhost:$LOCAL_AKRI_DASHBOARD_PORT" | tee -a "$REPORT"
   
   
   echo -e "\n### prepare execution report:"
@@ -388,6 +399,8 @@ exec_step2()
   
   echo -e "$STEP_COMPLETED $STEP"
   echo -e "$SCRIPT_COMPLETED"
+  
+  exit
   
 }
 
