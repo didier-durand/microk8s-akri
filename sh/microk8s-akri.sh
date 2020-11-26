@@ -4,7 +4,7 @@ set -e
 trap 'catch $? $LINENO' EXIT
 catch() {
   if [ "$1" != "0" ]; then
-    echo "Error $1 occurred on $2"
+    echo "Error $1 occurred on line $2"
     #delete_gce_instance $AKRI_INSTANCE
   fi
 }
@@ -98,7 +98,7 @@ then
   
   I=0
   STEP=1
-  STEP_REPORT="$AKRI_INSTANCE-step-report-$STEP.log" && rm "$STEP_REPORT" && touch "$STEP_REPORT"
+  STEP_REPORT="$AKRI_INSTANCE-step-report-$STEP.log" && (rm "$STEP_REPORT" || true) && touch "$STEP_REPORT"
   while [[ ! $(cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED") && $I -lt 5 ]]
   do
     I=$((I+1))
@@ -111,7 +111,7 @@ then
         if [[ "$STEP" -lt "$TOTAL_STEPS" ]]
         then
           STEP=$((STEP+1))
-          STEP_REPORT="$AKRI_INSTANCE-step-report-$STEP.log" && rm "$STEP_REPORT"  && touch "$STEP_REPORT"
+          STEP_REPORT="$AKRI_INSTANCE-step-report-$STEP.log" && (rm "$STEP_REPORT" || true)  && touch "$STEP_REPORT"
         fi
       fi
     fi
@@ -122,7 +122,7 @@ then
     done
   done
   cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED"
-  rm -f "$AKRI_INSTANCE-step-report-*" || true
+  rm  "$AKRI_INSTANCE-step-report-*" || true
   curl http://localhost:12321 | grep 'Akri Demo'
   curl http://localhost:12321 | grep 'camera_frame_feed'
   
