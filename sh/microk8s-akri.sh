@@ -353,7 +353,7 @@ exec_step2()
     (nohup microk8s kubectl port-forward -n 'kube-system' 'service/kubernetes-dashboard' "$LOCAL_K8S_DASHBOARD_PORT:$K8S_DASHBOARD_PORT" | tee -a "$REPORT") >> nohup.out 2>> nohup.err < /dev/null &
     
     DEFAULT_MK8S_TOKEN=$(microk8s kubectl -n kube-system get secret --output=jsonpath='{.data.token}' "$(microk8s kubectl -n kube-system get secret | grep 'default-token' | cut -d " " -f1)")
-    echo -e "default microk8s token:\n$DEFAULT_MK8S_TOKEN"
+    echo -e "default microk8s token:\n$DEFAULT_MK8S_TOKEN" | tee -a "$REPORT"
     K8S_DASHBOARD_PORT=$(microk8s kubectl get -n 'kube-system' 'service/kubernetes-dashboard' --output=jsonpath='{.spec.ports[0].port}')
     LOCAL_K8S_DASHBOARD_PORT=3443
   
@@ -363,7 +363,9 @@ exec_step2()
   curl http://localhost:12321 | grep 'Akri'
   curl http://localhost:12321 | grep 'camera_frame_feed'
   
+  echo -e " " | tee -a "$REPORT"
   echo -e "gcloud command for port-forwarding of K8s & Akri dashboards:  gcloud compute ssh $AKRI_INSTANCE --zone=$GCP_ZONE"  ' --project=$GCP_PROJECT ' "--ssh-flag='-L $LOCAL_K8S_DASHBOARD_PORT:localhost:$LOCAL_K8S_DASHBOARD_PORT -L $LOCAL_AKRI_DASHBOARD_PORT:localhost:$LOCAL_AKRI_DASHBOARD_PORT'"  | tee -a "$REPORT"
+  echo -e " " | tee -a "$REPORT"
   echo -e "K8s authentication token: $(microk8s config | grep token | awk '{print $2}')" | tee -a "$REPORT"
   echo -e "K8s dashboard: https://localhost:$LOCAL_K8S_DASHBOARD_PORT" | tee -a "$REPORT"
   echo -e "Akri dashboard:  http://localhost:$LOCAL_AKRI_DASHBOARD_PORT" | tee -a "$REPORT"
