@@ -14,7 +14,7 @@
 
 ## Goal
 
-This repository delivers a fully scripted workflow (install + run - based on [microk8s-akri.yml](.github/workflows/microk8s-akri.yml) and [microk8s-akri.sh](sh/microk8s-akri.sh)) on GitHub CI/CD of the [end-to-end demo](https://github.com/deislabs/akri/blob/main/docs/end-to-end-demo.md) recently published by the [Akri project](https://github.com/deislabs/akri): it illustrates the use of video cameras (mocked here by test video streams) in Kubernetes edge workloads. The badge above gives status of our last execution (see also section [Execution Report](README.md#execution-report)) and details for all previous runs can be found in the [Actions tab](https://github.com/didier-durand/microk8s-akri/actions).
+This repository delivers a fully scripted workflow (install + run - based on [microk8s-akri.yml](.github/workflows/microk8s-akri.yml) and [microk8s-akri.sh](sh/microk8s-akri.sh)) on GitHub CI / CD of the [end-to-end demo](https://github.com/deislabs/akri/blob/main/docs/end-to-end-demo.md) recently published by the [Akri project](https://github.com/deislabs/akri): it illustrates the use of video cameras (mocked here by test video streams) in Kubernetes edge workloads. The badge above gives status of our last execution (see also section [Execution Report](README.md#execution-report)) and details for all previous runs can be found in the [Actions tab](https://github.com/didier-durand/microk8s-akri/actions).
 
 Akri by Microsoft follows the Greek-based naming tradition of the Kubernetes arena: "akri" means ["edge" in Greek](https://en.wiktionary.org/wiki/%CE%AC%CE%BA%CF%81%CE%B7). Interestingly, the Akri acronym can also stand for "A Kubernetes Resource Interface". So, it's now clear that the project is all about edge computing and the [Internet of Things (IoT)](https://en.wikipedia.org/wiki/Internet_of_things) with its [30+ billions of connected objects](https://iot-analytics.com/state-of-the-iot-2020-12-billion-iot-connections-surpassing-non-iot-for-the-first-time/) to emerge in next five years: 4 connected objects per human being worldwide in 2025 as predicted by IoT Analytics.
 
@@ -22,9 +22,11 @@ Akri by Microsoft follows the Greek-based naming tradition of the Kubernetes are
 
 The workflow is also automatically scheduled by cron (see [microk8s-akri.yml](.github/workflows/microk8s-akri.yml)) on GitHub on a recurrent basis to validate that it keeps working properly while its various components keep evolving: new versions of Akri, MicroK8s, Ubuntu, etc. [MicroK8s defined as](https://microk8s.io/) *'autonomous, production-grade Kubernetes, on cloud, clusters, workstations, Edge and IoT'* is used here because its source code is extremely close to the upstream version of Kubernetes: this feature guarantees the widest possible range of use cases for those workloads making sophisticated use of the K8s features. We have already used it for same reasons in our scripted showcases for [Kube Bench](https://github.com/didier-durand/microk8s-kube-bench) and [Kata Containers](https://github.com/didier-durand/microk8s-kata-containers).
 
-Section [Workflow Actions](README.md#workflow-actions) below details the sequence of actions needed to reach a working deployment starting from a fresh Ubuntu instance launched on Google Cloud Engine (GCE).
+Section [Workflow Actions](README.md#workflow-actions) below details the sequence of actions needed to reach a working deployment starting from a fresh Ubuntu instance launched on Google Cloud Engine (GCE): we currently use a [n1-standard-4](https://cloud.google.com/compute/docs/machine-types#n1_machine_types) instance.
 
 The workflow execution finally delivers the command(s) needed to obtain remote access on GCE to both the standard Kubernetes dashboard and the Akri demo application from the browser on your laptop: web pages similar to the ones below will be reached.
+
+Feel free to fork and re-use! (Of course, if you like it, please, give it a star)
 
 ## Kubernetes On The Edge - Akri Architecture
 
@@ -53,7 +55,7 @@ Regarding existing protocols, detailed instructions to configure the [Helm chart
 
 This workflow is strongly inspired by the description and directives of the [end-to-end demo](https://github.com/deislabs/akri/blob/main/docs/end-to-end-demo.md) provided by project's Github repo. Please, refer to it for all details.
 
-In our script, we add the automation around the canonical procedure to run it on a Google Cloud GCE. The workflow is driven by ssh commands executed from another Ubuntu machine provided Github CI /CD. Thorough logging is also added to allow post-mortem analysis of the failing executions as the underlying environment changes: Github Actions, Ubuntu, Microk8s, Akri Helm chart and container images get installed at latest version on new runs. 
+In our script, we add the automation around the canonical procedure to run it on a Google Cloud GCE. The workflow is driven by ssh commands executed from another Ubuntu machine provided by Github CI / CD. Thorough logging is also added to allow post-mortem analysis of the failing executions as the underlying environment changes: Github Actions, Ubuntu, Microk8s, Akri Helm chart and container images get installed at latest version on new runs. 
 
 This additional logging can be suppressed if you prefer less verbose executions in your own use case. Additionally, [microk8s-akri.sh](sh/microk8s-akri.sh) can be run directly on your laptop: we use it as-is in MacOS terminal to execute the workflow on GCE without Github.
 
@@ -83,7 +85,7 @@ When all those steps have successfully completed, both the standard Kubernetes d
 ## Fork & Run
 
 To start, you need a Google Cloud account including a project where the GCE APIs have been enabled. Obtain the id of your project from 
-GCP dashboard. Additionally, you need to create in this project a service account (SA) and give it proper GKE credentials: right to create, administer and delete GCE images & instances (if your cannot make the SA a "Project Owner" to simplify the security aspects...). Save the private key of the SA in json format.
+GCP dashboard. Additionally, you need to create in this project a service account (SA) and give it proper GCE credentials: right to create, administer and delete GCE images & instances (if your cannot make the SA a "Project Owner" to simplify the security aspects...). Save the private key of the SA in json format.
 
 Then, fork our repository and define the required [Github Secrets](https://docs.github.com/en/actions/reference/encrypted-secrets) in your fork: 
 
