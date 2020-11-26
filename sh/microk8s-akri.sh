@@ -123,8 +123,6 @@ then
   done
   cat "$STEP_REPORT" | grep "$SCRIPT_COMPLETED"
   rm  "$AKRI_INSTANCE-step-report-*" || true
-  curl http://localhost:12321 | grep 'Akri Demo'
-  curl http://localhost:12321 | grep 'camera_frame_feed'
   
   #generate report when on Github
   if [[ ! -z "$GITHUB_WORKFLOW" ]]
