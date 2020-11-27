@@ -3,6 +3,7 @@
 # Akri on MicroK8s
 
 ![workflow badge](https://github.com/didier-durand/microk8s-akri/workflows/Akri%20on%20MicroK8s/badge.svg)
+<img src="https://img.shields.io/badge/kubernetes-1.19-blue">
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 * [Goal](README.md#goal)
