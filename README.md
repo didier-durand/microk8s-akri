@@ -28,10 +28,10 @@ The workflow execution finally delivers the command(s) needed to obtain remote a
 
 Feel free to fork and re-use! (Of course, if you like it, please, give it a star)
 
-When you reach the end of workflow execution, you will be able to access, from your local browser two different applications produced by the pods of your MicroK8s cluster running on GCE. To allow port forwarding over ssh toward your laptop, you will need to enter the following command  `gcloud compute ssh microk8s-akri --zone=us-central1-c  --project=$GCP_PROJECT  --ssh-flag='-L 3443:localhost:3443 -L 12321:localhost:12321'`. Then,
+When you reach the end of workflow execution, you will be able to access, from your local browser two different applications produced by the pods of your MicroK8s cluster running on GCE. To allow port forwarding over ssh toward your laptop, you need to have gcloud SDK installed locally and to enter the following terminal command  `gcloud compute ssh microk8s-akri --zone=us-central1-c  --project=$GCP_PROJECT  --ssh-flag='-L 3443:localhost:3443 -L 12321:localhost:12321'`. Then,
 
 
-1. `http://localhost:12321` will get you to the Akri demo application.  At the bottom, permament images of the 2 fake cameras at the bottom (the first with a bouncing ball, the second one with a colour carrousel). The top image shifts from one camera to the other every few seconds.
+1. `http://localhost:12321` will get you to the Akri demo application. At the bottom, permament images (updated at 1 fps) of the 2 fake cameras: the first with a bouncing ball, the second one with a colour carrousel. The top image shifts from one camera to the other every few seconds.
 2. `http://localhost:3443` will get you to the standard Kubernetes dashboard showing all details above the 11 active pods. You need to obtain the security token from the final lines of the execution log to authentify with the dashboard.
 
 <img src="img/akri-app.jpg" height="320">  <img src="img/akri-k8s-dashboard.jpg" height="320"> 
@@ -109,30 +109,10 @@ To easily use the workflow from Github, you can launch it with the [manual dispa
 The workflow will execute all the steps described above and keep the instance up and running for further exploration. Up to you to delete it via Google Cloud console when it's no longer needed. When scheduled automatically, it will terminate gracefully after all validation tests described are completed: it will then delete the GCE instance. 
 ## Execution Report
 ```
-### execution date: Thu Nov 26 14:31:02 UTC 2020
+### execution date: Thu Nov 26 14:59:37 UTC 2020
  
 ### microk8s snap version:
 microk8s          v1.19.3    1791   1.19/stable      canonical*         classic
- 
-### gstreamer version:
-gst-launch-1.0 version 1.16.2
-GStreamer 1.16.2
-https://launchpad.net/distros/ubuntu/+source/gstreamer1.0
- 
-### ubuntu version:
-Linux microk8s-akri 5.4.0-1029-gcp #31-Ubuntu SMP Wed Oct 21 19:38:01 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux
-Distributor ID:	Ubuntu
-Description:	Ubuntu 20.04.1 LTS
-Release:	20.04
-Codename:	focal
- 
-### execution date: Thu Nov 26 14:02:13 UTC 2020
- 
-### microk8s snap version:
-microk8s          v1.19.3    1791   1.19/stable      canonical*         classic
- 
-### crictl version:
-
  
 ### gstreamer version:
 gst-launch-1.0 version 1.16.2
@@ -149,7 +129,7 @@ Codename:	focal
 
 ### build kernel module v4l2loopback: 
 Selecting previously unselected package v4l2loopback-dkms.
-(Reading database ... 73898 files and directories currently installed.)
+(Reading database ... 73918 files and directories currently installed.)
 Preparing to unpack v4l2loopback-dkms_0.12.5-1_all.deb ...
 Unpacking v4l2loopback-dkms (0.12.5-1) ...
 Setting up v4l2loopback-dkms (0.12.5-1) ...
@@ -164,8 +144,8 @@ videodev              225280  1 v4l2loopback
 vermagic:       5.4.0-1029-gcp SMP mod_unload 
 
 ### check devices: 
-crw------- 1 root root 81, 0 Nov 26 13:45 /dev/video1
-crw------- 1 root root 81, 1 Nov 26 13:45 /dev/video2
+crw------- 1 root root 81, 0 Nov 26 14:49 /dev/video1
+crw------- 1 root root 81, 1 Nov 26 14:49 /dev/video2
 
 ### start video streams (in background): 
 Setting pipeline to PAUSED ...
@@ -173,9 +153,9 @@ Setting pipeline to PAUSED ...
 Pipeline is PREROLLING ...
 Pipeline is PREROLLING ...
 /GstPipeline:pipeline0/GstVideoTestSrc:videotestsrc0.GstPad:src: caps = video/x-raw, format=(string)I420, width=(int)640, height=(int)480, framerate=(fraction)10/1, multiview-mode=(string)mono, colorimetry=(string)2:4:7:1, pixel-aspect-ratio=(fraction)1/1, interlace-mode=(string)progressive
+/GstPipeline:pipeline0/GstCapsFilter:capsfilter0.GstPad:src: caps = video/x-raw, format=(string)I420, width=(int)640, height=(int)480, framerate=(fraction)10/1, multiview-mode=(string)mono, colorimetry=(string)2:4:7:1, pixel-aspect-ratio=(fraction)1/1, interlace-mode=(string)progressive
 /GstPipeline:pipeline0/GstVideoTestSrc:videotestsrc0.GstPad:src: caps = video/x-raw, format=(string)I420, width=(int)640, height=(int)480, framerate=(fraction)10/1, multiview-mode=(string)mono, colorimetry=(string)2:4:7:1, pixel-aspect-ratio=(fraction)1/1, interlace-mode=(string)progressive
 /GstPipeline:pipeline0/GstCapsFilter:capsfilter0.GstPad:src: caps = video/x-raw, format=(string)I420, width=(int)640, height=(int)480, framerate=(fraction)10/1, multiview-mode=(string)mono, colorimetry=(string)2:4:7:1, pixel-aspect-ratio=(fraction)1/1, interlace-mode=(string)progressive
-/GstPipeline:pipeline0/GstCapsFilter:capsfilter0.GstPad:src: caps = video/x-raw, format=(string)I420, width=(int)640, height=(int)480, framerate=(fraction)10/1, multiview-mode=(string)mono, colorimetry=(string)2:4:7:1, pixel-aspect-ratio=(fraction)1/1, interlace-mode=(string)progressive
 /GstPipeline:pipeline0/avenc_mjpeg:avenc_mjpeg0.GstPad:sink: caps = video/x-raw, format=(string)I420, width=(int)640, height=(int)480, framerate=(fraction)10/1, multiview-mode=(string)mono, colorimetry=(string)2:4:7:1, pixel-aspect-ratio=(fraction)1/1, interlace-mode=(string)progressive
 /GstPipeline:pipeline0/GstCapsFilter:capsfilter0.GstPad:sink: caps = video/x-raw, format=(string)I420, width=(int)640, height=(int)480, framerate=(fraction)10/1, multiview-mode=(string)mono, colorimetry=(string)2:4:7:1, pixel-aspect-ratio=(fraction)1/1, interlace-mode=(string)progressive
 /GstPipeline:pipeline0/avenc_mjpeg:avenc_mjpeg0.GstPad:sink: caps = video/x-raw, format=(string)I420, width=(int)640, height=(int)480, framerate=(fraction)10/1, multiview-mode=(string)mono, colorimetry=(string)2:4:7:1, pixel-aspect-ratio=(fraction)1/1, interlace-mode=(string)progressive
@@ -185,10 +165,10 @@ Pipeline is PREROLLING ...
 /GstPipeline:pipeline0/GstV4l2Sink:v4l2sink0.GstPad:sink: caps = image/jpeg, parsed=(boolean)true, width=(int)640, height=(int)480, colorimetry=(string)2:4:7:1, framerate=(fraction)10/1, pixel-aspect-ratio=(fraction)1/1, interlace-mode=(string)progressive, multiview-mode=(string)mono, multiview-flags=(GstVideoMultiviewFlagsSet)0:ffffffff:/right-view-first/left-flipped/left-flopped/right-flipped/right-flopped/half-aspect/mixed-mono
 /GstPipeline:pipeline0/GstV4l2Sink:v4l2sink0.GstPad:sink: caps = image/jpeg, parsed=(boolean)true, width=(int)640, height=(int)480, colorimetry=(string)2:4:7:1, framerate=(fraction)10/1, pixel-aspect-ratio=(fraction)1/1, interlace-mode=(string)progressive, multiview-mode=(string)mono, multiview-flags=(GstVideoMultiviewFlagsSet)0:ffffffff:/right-view-first/left-flipped/left-flopped/right-flipped/right-flopped/half-aspect/mixed-mono
 Pipeline is PREROLLED ...
-Pipeline is PREROLLED ...
-Setting pipeline to PLAYING ...
 Setting pipeline to PLAYING ...
 New clock: GstSystemClock
+Pipeline is PREROLLED ...
+Setting pipeline to PLAYING ...
 New clock: GstSystemClock
 
 ### enabling microk8s addons: 
@@ -249,7 +229,7 @@ https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/cre
 ### install akri chart: 
 "akri-helm-charts" has been added to your repositories
 NAME: akri
-LAST DEPLOYED: Thu Nov 26 14:00:49 2020
+LAST DEPLOYED: Thu Nov 26 14:58:13 2020
 NAMESPACE: default
 STATUS: deployed
 REVISION: 1
@@ -276,40 +256,42 @@ deployment.apps/akri-video-streaming-app condition met
 
 ### get pods --all-namespaces: 
 NAMESPACE     NAME                                          READY   STATUS    RESTARTS   AGE     IP            NODE            NOMINATED NODE   READINESS GATES
-kube-system   coredns-86f78bb79c-g5wlk                      1/1     Running   0          2m47s   10.1.54.67    microk8s-akri   <none>           <none>
-kube-system   metrics-server-8bbfb4bdb-6nghr                1/1     Running   0          2m24s   10.1.54.68    microk8s-akri   <none>           <none>
-kube-system   calico-node-tcr76                             1/1     Running   2          5m      10.128.0.42   microk8s-akri   <none>           <none>
-kube-system   calico-kube-controllers-847c8c99d-ckkp8       1/1     Running   1          5m      10.1.54.71    microk8s-akri   <none>           <none>
-kube-system   kubernetes-dashboard-7ffd448895-w7ld4         1/1     Running   0          2m25s   10.1.54.69    microk8s-akri   <none>           <none>
-kube-system   dashboard-metrics-scraper-6c4568dc68-n95j8    1/1     Running   0          2m25s   10.1.54.70    microk8s-akri   <none>           <none>
-default       akri-agent-daemonset-vl4kl                    1/1     Running   0          81s     10.128.0.42   microk8s-akri   <none>           <none>
-default       akri-controller-deployment-5b4bb5cbb5-k6chl   1/1     Running   0          81s     10.1.54.72    microk8s-akri   <none>           <none>
-default       akri-udev-video-aa247f-pod                    1/1     Running   0          72s     10.1.54.73    microk8s-akri   <none>           <none>
-default       akri-udev-video-018417-pod                    1/1     Running   0          72s     10.1.54.74    microk8s-akri   <none>           <none>
-default       akri-video-streaming-app-fd5f4cb7d-qjqdz      1/1     Running   0          20s     10.1.54.75    microk8s-akri   <none>           <none>
+kube-system   calico-kube-controllers-847c8c99d-x8t4w       1/1     Running   1          4m49s   10.1.54.71    microk8s-akri   <none>           <none>
+kube-system   kubernetes-dashboard-7ffd448895-2svqv         1/1     Running   0          2m26s   10.1.54.67    microk8s-akri   <none>           <none>
+kube-system   calico-node-d9trc                             1/1     Running   2          4m49s   10.128.0.43   microk8s-akri   <none>           <none>
+kube-system   dashboard-metrics-scraper-6c4568dc68-22xq2    1/1     Running   0          2m26s   10.1.54.69    microk8s-akri   <none>           <none>
+kube-system   metrics-server-8bbfb4bdb-qfzqg                1/1     Running   0          2m26s   10.1.54.70    microk8s-akri   <none>           <none>
+kube-system   coredns-86f78bb79c-dxp8x                      1/1     Running   0          2m48s   10.1.54.68    microk8s-akri   <none>           <none>
+default       akri-agent-daemonset-zcmqs                    1/1     Running   0          82s     10.128.0.43   microk8s-akri   <none>           <none>
+default       akri-controller-deployment-5b4bb5cbb5-gxzml   1/1     Running   0          82s     10.1.54.72    microk8s-akri   <none>           <none>
+default       akri-udev-video-aa247f-pod                    1/1     Running   0          73s     10.1.54.74    microk8s-akri   <none>           <none>
+default       akri-udev-video-018417-pod                    1/1     Running   0          73s     10.1.54.73    microk8s-akri   <none>           <none>
+default       akri-video-streaming-app-fd5f4cb7d-dv499      1/1     Running   0          21s     10.1.54.75    microk8s-akri   <none>           <none>
 
 ### get daemonsets --all-namespaces: 
-NAMESPACE     NAME                   DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE    CONTAINERS    IMAGES                                   SELECTOR
-kube-system   calico-node            1         1         1       1            1           kubernetes.io/os=linux   5m5s   calico-node   calico/node:v3.13.2                      k8s-app=calico-node
-default       akri-agent-daemonset   1         1         1       1            1           kubernetes.io/os=linux   81s    akri-agent    ghcr.io/deislabs/akri/agent:latest-dev   name=akri-agent
+NAMESPACE     NAME                   DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE     CONTAINERS    IMAGES                                   SELECTOR
+kube-system   calico-node            1         1         1       1            1           kubernetes.io/os=linux   4m59s   calico-node   calico/node:v3.13.2                      k8s-app=calico-node
+default       akri-agent-daemonset   1         1         1       1            1           kubernetes.io/os=linux   82s     akri-agent    ghcr.io/deislabs/akri/agent:latest-dev   name=akri-agent
 
 ### get services --all-namespaces: 
 NAMESPACE     NAME                         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                  AGE     SELECTOR
-default       kubernetes                   ClusterIP   10.152.183.1     <none>        443/TCP                  5m10s   <none>
-kube-system   kube-dns                     ClusterIP   10.152.183.10    <none>        53/UDP,53/TCP,9153/TCP   2m49s   k8s-app=kube-dns
-kube-system   metrics-server               ClusterIP   10.152.183.43    <none>        443/TCP                  2m28s   k8s-app=metrics-server
-kube-system   kubernetes-dashboard         ClusterIP   10.152.183.61    <none>        443/TCP                  2m26s   k8s-app=kubernetes-dashboard
-kube-system   dashboard-metrics-scraper    ClusterIP   10.152.183.97    <none>        8000/TCP                 2m26s   k8s-app=dashboard-metrics-scraper
-default       akri-udev-video-aa247f-svc   ClusterIP   10.152.183.66    <none>        80/TCP                   65s     akri.sh/instance=akri-udev-video-aa247f,controller=akri.sh
-default       akri-udev-video-svc          ClusterIP   10.152.183.110   <none>        80/TCP                   65s     akri.sh/configuration=akri-udev-video,controller=akri.sh
-default       akri-udev-video-018417-svc   ClusterIP   10.152.183.148   <none>        80/TCP                   65s     akri.sh/instance=akri-udev-video-018417,controller=akri.sh
-default       akri-video-streaming-app     NodePort    10.152.183.12    <none>        80:31039/TCP             21s     app=akri-video-streaming-app
+default       kubernetes                   ClusterIP   10.152.183.1     <none>        443/TCP                  4m59s   <none>
+kube-system   kube-dns                     ClusterIP   10.152.183.10    <none>        53/UDP,53/TCP,9153/TCP   2m48s   k8s-app=kube-dns
+kube-system   metrics-server               ClusterIP   10.152.183.104   <none>        443/TCP                  2m28s   k8s-app=metrics-server
+kube-system   kubernetes-dashboard         ClusterIP   10.152.183.159   <none>        443/TCP                  2m27s   k8s-app=kubernetes-dashboard
+kube-system   dashboard-metrics-scraper    ClusterIP   10.152.183.123   <none>        8000/TCP                 2m27s   k8s-app=dashboard-metrics-scraper
+default       akri-udev-video-aa247f-svc   ClusterIP   10.152.183.241   <none>        80/TCP                   63s     akri.sh/instance=akri-udev-video-aa247f,controller=akri.sh
+default       akri-udev-video-svc          ClusterIP   10.152.183.142   <none>        80/TCP                   63s     akri.sh/configuration=akri-udev-video,controller=akri.sh
+default       akri-udev-video-018417-svc   ClusterIP   10.152.183.59    <none>        80/TCP                   63s     akri.sh/instance=akri-udev-video-018417,controller=akri.sh
+default       akri-video-streaming-app     NodePort    10.152.183.21    <none>        80:32293/TCP             21s     app=akri-video-streaming-app
 Akri dashboard ports - gce:  80 - local: 12321 
 K8s dashboard ports - gce:  443 - local: 3443 
 Forwarding from 127.0.0.1:12321 -> 5000
 Forwarding from [::1]:12321 -> 5000
 Forwarding from 127.0.0.1:3443 -> 8443
 Forwarding from [::1]:3443 -> 8443
+default microk8s token:
+ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNkluVnBlaTFwYW1vdGJqZHdhR1ZDUjI1MmNFcG9NMHBvTFVwMFRGbGpSR2hoWjNoVlRGbG9ka3N3TUc4aWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUpyZFdKbExYTjVjM1JsYlNJc0ltdDFZbVZ5Ym1WMFpYTXVhVzh2YzJWeWRtbGpaV0ZqWTI5MWJuUXZjMlZqY21WMExtNWhiV1VpT2lKa1pXWmhkV3gwTFhSdmEyVnVMWEE1YTJ0MElpd2lhM1ZpWlhKdVpYUmxjeTVwYnk5elpYSjJhV05sWVdOamIzVnVkQzl6WlhKMmFXTmxMV0ZqWTI5MWJuUXVibUZ0WlNJNkltUmxabUYxYkhRaUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNTFhV1FpT2lJek1qZGhaamczTXkwNVpHSTRMVFJsT1RFdFlUUm1NQzFoTnpjeU56azFaRFExTURRaUxDSnpkV0lpT2lKemVYTjBaVzA2YzJWeWRtbGpaV0ZqWTI5MWJuUTZhM1ZpWlMxemVYTjBaVzA2WkdWbVlYVnNkQ0o5LmE2R0dCdV83N1RZSUVOOHg3NDR1aVR4bHZkS3dpSWtkc0dWeFF5YmY2WDBYVmhseG50ZDFuTnJzS280NEFsVmhVLWJNbkp4REZvOWVIUjBwVW8xaHhScldUU2pzTjFmNmtJaGJKd1UzSUxFSExrR1JBWmZhVThfMXhrSldmNGY4TGFsNmFxSXpsZVdOaU9PMFBYOUxyV2FmUjROeFhzbkczZkhxckRNN18xR1pSQ3NmWFZOUHUwbUNaMVpYZWJITldYUFlYdGlXX05mWHNheTJWWnhLTVhwVG9XRE43Y0dnMFNhaGFOeEx4QnRVNlpZS2hGV2cxTUUyQ08weVFsRmZmWE9iYkd4WjhXYjI5SkF6bWJGNTlQeUdZSzVHbE9NcWdHOHBsZ2pqS0pvcHdGLVpTekdrZWJwckRSN2JTbXg1TkdBX2dkbnBLTExRa3JJc2N3eVVPZw==
 Handling connection for 12321
 <html>
   <head>
@@ -336,108 +318,16 @@ Handling connection for 12321
   </body>
 </html>Handling connection for 12321
 Handling connection for 12321
-gcloud command for access to K8s & Akri dashboards gcloud compute ssh microk8s-akri --zone=us-central1-c  --project=$GCP_PROJECT  --ssh-flag='-L 3443:localhost:3443 -L 12321:localhost:12321'
-use authentication token: eFlnRjAvWnBmRmNtMnppTHdRdFRPSVN3bEFKRGpzaU5lZko1ZXluampsQT0K
-k8s dashboard: https://localhost:3443 - akri dashboard:  https://localhost:12321
-akri dashboard:  http://localhost:12321
-
-### load kernel module v4l2loopback: 
-
-### check required kernel modules: 
-videodev              225280  5 v4l2loopback
-mc                     53248  1 videodev
-v4l2loopback           40960  4
-videodev              225280  5 v4l2loopback
-vermagic:       5.4.0-1029-gcp SMP mod_unload 
-
-### check devices: 
-crw-rw---- 1 root video 81, 0 Nov 26 14:27 /dev/video1
-crw-rw---- 1 root video 81, 1 Nov 26 14:27 /dev/video2
-
-### enabling microk8s addons: 
-Addon dns is already enabled.
-Addon helm3 is already enabled.
-Addon rbac is already enabled.
-Addon dashboard is already enabled.
-
-### install akri chart: 
-akri-helm-charts	https://deislabs.github.io/akri/
-
-### waiting for installed chart to get ready: 
-deployment.apps/akri-controller-deployment condition met
-
-### get akri configuration: 
-NAME              CAPACITY   AGE
-akri-udev-video   1          30m
-
-### install video streaming app: 
-deployment.apps/akri-video-streaming-app unchanged
-service/akri-video-streaming-app unchanged
-deployment.apps/akri-video-streaming-app condition met
-
-### get pods --all-namespaces: 
-NAMESPACE     NAME                                          READY   STATUS    RESTARTS   AGE   IP            NODE            NOMINATED NODE   READINESS GATES
-kube-system   coredns-86f78bb79c-g5wlk                      1/1     Running   0          31m   10.1.54.67    microk8s-akri   <none>           <none>
-kube-system   metrics-server-8bbfb4bdb-6nghr                1/1     Running   0          31m   10.1.54.68    microk8s-akri   <none>           <none>
-kube-system   calico-node-tcr76                             1/1     Running   2          33m   10.128.0.42   microk8s-akri   <none>           <none>
-kube-system   calico-kube-controllers-847c8c99d-ckkp8       1/1     Running   1          33m   10.1.54.71    microk8s-akri   <none>           <none>
-kube-system   kubernetes-dashboard-7ffd448895-w7ld4         1/1     Running   0          31m   10.1.54.69    microk8s-akri   <none>           <none>
-kube-system   dashboard-metrics-scraper-6c4568dc68-n95j8    1/1     Running   0          31m   10.1.54.70    microk8s-akri   <none>           <none>
-default       akri-agent-daemonset-vl4kl                    1/1     Running   0          30m   10.128.0.42   microk8s-akri   <none>           <none>
-default       akri-controller-deployment-5b4bb5cbb5-k6chl   1/1     Running   0          30m   10.1.54.72    microk8s-akri   <none>           <none>
-default       akri-udev-video-aa247f-pod                    1/1     Running   0          30m   10.1.54.73    microk8s-akri   <none>           <none>
-default       akri-udev-video-018417-pod                    1/1     Running   0          30m   10.1.54.74    microk8s-akri   <none>           <none>
-default       akri-video-streaming-app-fd5f4cb7d-qjqdz      1/1     Running   0          29m   10.1.54.75    microk8s-akri   <none>           <none>
-
-### get daemonsets --all-namespaces: 
-NAMESPACE     NAME                   DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE   CONTAINERS    IMAGES                                   SELECTOR
-kube-system   calico-node            1         1         1       1            1           kubernetes.io/os=linux   33m   calico-node   calico/node:v3.13.2                      k8s-app=calico-node
-default       akri-agent-daemonset   1         1         1       1            1           kubernetes.io/os=linux   30m   akri-agent    ghcr.io/deislabs/akri/agent:latest-dev   name=akri-agent
-
-### get services --all-namespaces: 
-NAMESPACE     NAME                         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                  AGE   SELECTOR
-default       kubernetes                   ClusterIP   10.152.183.1     <none>        443/TCP                  33m   <none>
-kube-system   kube-dns                     ClusterIP   10.152.183.10    <none>        53/UDP,53/TCP,9153/TCP   31m   k8s-app=kube-dns
-kube-system   metrics-server               ClusterIP   10.152.183.43    <none>        443/TCP                  31m   k8s-app=metrics-server
-kube-system   kubernetes-dashboard         ClusterIP   10.152.183.61    <none>        443/TCP                  31m   k8s-app=kubernetes-dashboard
-kube-system   dashboard-metrics-scraper    ClusterIP   10.152.183.97    <none>        8000/TCP                 31m   k8s-app=dashboard-metrics-scraper
-default       akri-udev-video-aa247f-svc   ClusterIP   10.152.183.66    <none>        80/TCP                   29m   akri.sh/instance=akri-udev-video-aa247f,controller=akri.sh
-default       akri-udev-video-svc          ClusterIP   10.152.183.110   <none>        80/TCP                   29m   akri.sh/configuration=akri-udev-video,controller=akri.sh
-default       akri-udev-video-018417-svc   ClusterIP   10.152.183.148   <none>        80/TCP                   29m   akri.sh/instance=akri-udev-video-018417,controller=akri.sh
-default       akri-video-streaming-app     NodePort    10.152.183.12    <none>        80:31039/TCP             29m   app=akri-video-streaming-app
-Akri dashboard ports - gce:  80 - local: 12321 
-K8s dashboard ports - gce:  443 - local: 3443 
-<html>
-  <head>
-    <title>Akri Demo</title>
-  </head>
-  <body>
-    <div style="max-width: 800px;  margin: auto;text-align:center">
-      <h1>Akri Demo</h1>
-      <div style="display: inline-block;clear:both;margin-bottom:30px">
-        <img src="/camera_frame_feed/0" style="width:480px">
-      </div>
-      <ul style="display: block;list-style-type: none;padding:0;">
-        
-        <li style="display: inline-block; padding: 0 25">
-          <img src="/camera_frame_feed/1" style="width:200px">
-        </li>
-        
-        <li style="display: inline-block; padding: 0 25">
-          <img src="/camera_frame_feed/2" style="width:200px">
-        </li>
-        
-      </ul>
-    </div>
-  </body>
-</html>gcloud command for port-forwarding of K8s & Akri dashboards:  gcloud compute ssh microk8s-akri --zone=us-central1-c  --project=$GCP_PROJECT  --ssh-flag='-L 3443:localhost:3443 -L 12321:localhost:12321'
-K8s authentication token: eFlnRjAvWnBmRmNtMnppTHdRdFRPSVN3bEFKRGpzaU5lZko1ZXluampsQT0K
+ 
+gcloud command for port-forwarding of K8s & Akri dashboards:  gcloud compute ssh microk8s-akri --zone=us-central1-c  --project=$GCP_PROJECT  --ssh-flag='-L 3443:localhost:3443 -L 12321:localhost:12321'
+ 
+K8s authentication token: WkZSYllqYkZTRnlkR0dxZXAvWlk5QXZhWUJra2hlSHlJbCtSb2Q1OWNlUT0K
 K8s dashboard: https://localhost:3443
 Akri dashboard:  http://localhost:12321
 ```
 ## Akri Helm Chart
 ```
-### generation date: Thu Nov 26 14:31:12 UTC 2020
+### generation date: Thu Nov 26 14:59:46 UTC 2020
  
 version.BuildInfo{Version:"v3.4.1", GitCommit:"c4e74854886b2efe3321e185578e6db9be0a6e29", GitTreeState:"clean", GoVersion:"go1.14.11"}
 ---
